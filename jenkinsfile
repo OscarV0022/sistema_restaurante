@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    environment {
+        // 👇 1. CAMBIA ESTO POR TU USUARIO REAL DE DOCKER HUB
+        DOCKER_USER = 'oscarv0022' 
+        APP_NAME = 'sistema_restaurante'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        CREDENTIALS_ID = 'docker-credentials' 
+    }
+
+    stages {
+        stage('🛠️ Construir Imagen Docker') {
+            steps {
+                script {
+                    echo "Entrando a la carpeta Backend y construyendo la imagen..."
+                    // 👇 2. OJO AQUÍ: Agregamos ./Backend al final del comando
+                    // Si tu carpeta se llama en minúsculas (backend), cámbialo a ./backend
+                    sh "docker build -t ${DOCKER_USER}/${APP_NAME}:${IMAGE_TAG} -t ${DOCKER_USER}/${APP_NAME}:latest ./Backend"
+                }
+            }
+        }
+
+        stage('🚀 Subir a Docker Hub') {
+            steps {
+                script {
+                    echo "Abriendo la caja fuerte y subiendo imagen..."
+                    withCredentials([usernamePassword(credentialsId: "${CREDENTIALS_ID}", passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                        sh "docker push ${DOCKER_USER}/${APP_NAME}:${IMAGE_TAG}"
+                        sh "docker push ${DOCKER_USER}/${APP_NAME}:latest"
+                    }
+                }
+            }
+        }
+
+        stage('🧹 Limpieza Local') {
+            steps {
+                script {
+                    echo "Limpiando la basura local..."
+                    sh "docker rmi ${DOCKER_USER}/${APP_NAME}:${IMAGE_TAG}"
+                    sh "docker rmi ${DOCKER_USER}/${APP_NAME}:latest"
+                    sh "docker logout"
+                }
+            }
+        }
+    }
+}

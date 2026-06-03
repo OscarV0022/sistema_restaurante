@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class ApiService {
   // OJO: Asegúrate que este puerto coincida con tu server.js (3000 o 3001)
-  private apiUrl = 'http://192.168.1.8:3000/api'; 
+  private apiUrl = 'http://localhost:3000/api'; 
 
   constructor(private http: HttpClient) { }
 
