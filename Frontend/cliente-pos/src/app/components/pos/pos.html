@@ -2,31 +2,21 @@
 
   <div *ngIf="!mesaSeleccionada" class="vista-mapa">
     
-    <div class="header-mapa">
-      <div class="encabezado-top">
-          <img src="logo.png" class="logo-restaurante" alt="Logo">
-          <h1>MAPA DEL RESTAURANTE</h1>
-          
-          <button mat-raised-button color="accent" 
-                  style="position: absolute; right: 10px;" 
-                  (click)="irAEncargos()">
-              <mat-icon>assignment</mat-icon> ENCARGOS
-          </button>
-      </div>
-      
-      <div class="controles-mapa">
-          <button mat-raised-button 
+    <header class="header-profesional">
+        <h1>Mapa de Mesas</h1>
+        <div class="controles-mapa">
+          <button mat-flat-button 
                   [color]="modoAgrupar ? 'warn' : 'primary'" 
-                  class="boton-agrupar"
                   (click)="toggleModoAgrupar()">
-            <mat-icon>merge_type</mat-icon>
-            {{ modoAgrupar ? 'CANCELAR' : 'UNIFICAR MESAS' }}
+            <mat-icon>{{ modoAgrupar ? 'close' : 'merge_type' }}</mat-icon>
+            {{ modoAgrupar ? 'Cancelar' : 'Unificar Mesas' }}
           </button>
+        </div>
+    </header>
 
-          <div *ngIf="modoAgrupar" class="instruccion-agrupar">
-            {{ !mesaOrigen ? '1. Toca la mesa que va a DESAPARECER' : '2. Toca la mesa PRINCIPAL (Destino)' }}
-          </div>
-      </div>
+    <div *ngIf="modoAgrupar" class="banner-instruccion">
+        <mat-icon>info</mat-icon>
+        {{ !mesaOrigen ? '1. Selecciona la mesa a Mover (Origen)' : '2. Selecciona la mesa Destino' }}
     </div>
 
     <mat-tab-group animationDuration="0ms" class="tabs-secciones">
@@ -34,189 +24,120 @@
         <div class="grid-mesas">
           <div *ngFor="let mesa of getMesasPorSeccion(sec)" 
                class="tarjeta-mesa" 
-               [class.ocupada]="mesa.estado === 'ocupada'"
-               [class.origen-seleccionado]="mesaOrigen?.id === mesa.id"
-               [class.es-madre]="mesa.mesasHijas.length > 0"
+               [ngClass]="{
+                 'ocupada': mesa.estado === 'ocupada', 
+                 'libre': mesa.estado === 'libre', 
+                 'origen-seleccionado': mesaOrigen?.id === mesa.id
+               }"
                (click)="clickEnMesa(mesa)">
-               
-              <div class="icono-mesa">
-                <mat-icon>
-                    {{ 
-                       mesa.mesasHijas.length > 0 ? 'groups' : 
-                       (mesa.seccion === 'PARA LLEVAR' ? 'shopping_bag' : 
-                       (mesa.estado === 'ocupada' ? 'restaurant' : 'table_restaurant')) 
-                    }}
-                </mat-icon>
+             
+              <div class="nombre-mesa">{{ mesa.nombre }}</div>
+              
+             
+              <div class="estado-mesa">
+                <mat-icon>{{ mesa.estado === 'libre' ? 'check_circle' : 'restaurant' }}</mat-icon>
+                {{ mesa.estado | titlecase }}
               </div>
-              
-              <h3>{{ mesa.nombre }}</h3>
-              
-              <span class="estado" *ngIf="mesa.mesasHijas.length === 0">{{ mesa.estado | titlecase }}</span>
-              <span class="estado-unido" *ngIf="mesa.mesasHijas.length > 0">+ {{ mesa.mesasHijas.length }} unida(s)</span>
-              
-              <div *ngIf="mesa.total > 0" class="mini-total">Q{{ mesa.total }}</div>
+             
+              <div *ngIf="mesa.total > 0" class="mini-total">Q{{ mesa.total | number:'1.2-2' }}</div>
           </div>
         </div>
       </mat-tab>
     </mat-tab-group>
   </div>
 
-
   <div *ngIf="mesaSeleccionada" class="contenedor-pos">
     
-    <div class="seccion-menu mat-elevation-z4">
-      <div class="header-menu-top">
-        <button mat-icon-button (click)="regresarAlMapa()" matTooltip="Volver al mapa">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
-        
-        <mat-form-field appearance="outline" class="buscador-full">
-            <mat-icon matPrefix>search</mat-icon>
-            <input matInput placeholder="Buscar (ej: Pepián)" 
-                   [(ngModel)]="busqueda" (ngModelChange)="filtrarPorBusqueda()" autocomplete="off">
-            <button mat-icon-button matSuffix *ngIf="busqueda" (click)="verCategorias()">
-                <mat-icon>close</mat-icon>
-            </button>
-        </mat-form-field>
-      </div>
-      
-      <div *ngIf="!categoriaSeleccionada && !busqueda" class="grid-categorias">
-         <div *ngFor="let cat of categorias" class="tarjeta-categoria" (click)="seleccionarCategoria(cat)">
-             <mat-icon>folder_open</mat-icon><h3>{{ cat }}</h3>
-         </div>
-      </div>
+    <div class="seccion-menu mat-elevation-z2">
+        <div class="header-menu">
+            <button mat-icon-button (click)="regresarAlMapa()"><mat-icon>arrow_back</mat-icon></button>
+            <mat-form-field appearance="fill" class="buscador-full">
+                <mat-icon matPrefix>search</mat-icon>
+                <input matInput placeholder="Buscar producto..." [(ngModel)]="busqueda" (ngModelChange)="filtrarPorBusqueda()">
+                <button mat-icon-button matSuffix *ngIf="busqueda" (click)="verCategorias()">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </mat-form-field>
+        </div>
 
-      <div *ngIf="categoriaSeleccionada || busqueda" class="contenedor-productos">
-          <div class="header-categoria" *ngIf="!busqueda && categoriaSeleccionada !== 'BUSQUEDA'">
-              <button mat-stroked-button (click)="verCategorias()">
-                  <mat-icon>arrow_back</mat-icon> VER CATEGORÍAS
-              </button>
-              <h3>{{ categoriaSeleccionada }}</h3>
-          </div>
-
-          <div class="grid-productos">
-            <mat-card *ngFor="let item of productosVisibles" class="tarjeta-producto" (click)="agregarAlCarrito(item)">
-              <mat-card-header>
-                <mat-card-title class="titulo-producto">{{ item.descripcion }}</mat-card-title>
-              </mat-card-header>
-              <mat-card-content class="contenido-tarjeta">
-                <span class="precio">Q{{ item.precio }}</span>
-                <mat-icon color="primary">add_circle</mat-icon>
-              </mat-card-content>
-            </mat-card>
-
-            <div *ngIf="productosVisibles.length === 0" class="sin-resultados">
-                <mat-icon>search_off</mat-icon>
-                <p>No se encontró "{{ busqueda }}"</p>
+        <div class="grid-categorias" *ngIf="!categoriaSeleccionada && !busqueda">
+            <div *ngFor="let cat of categorias" class="btn-categoria" (click)="seleccionarCategoria(cat)">
+                {{ cat }}
             </div>
-          </div>
-      </div>
+        </div>
+
+        <div class="contenedor-productos">
+            <div class="header-categoria" *ngIf="!busqueda && categoriaSeleccionada !== 'BUSQUEDA'">
+                <button mat-stroked-button (click)="verCategorias()"><mat-icon>arrow_back</mat-icon> Ver Categorías</button>
+            </div>
+
+            <div class="grid-productos">
+                <mat-card *ngFor="let item of productosVisibles" class="tarjeta-producto" (click)="agregarAlCarrito(item)">
+                    <div class="producto-info">
+                        <span class="nombre">{{ item.descripcion }}</span>
+                        <span class="precio">Q{{ item.precio }}</span>
+                    </div>
+                </mat-card>
+            </div>
+        </div>
     </div>
   
-    <div class="seccion-ticket mat-elevation-z8">
+    <div class="seccion-ticket mat-elevation-z4">
       
       <ng-container *ngIf="!mostrandoPantallaPago">
         <div class="header-ticket">
-            <div class="info-mesa-ticket">
-                <h2>{{ mesaSeleccionada.nombre }}</h2>
-                <span *ngIf="mesaSeleccionada.mesasHijas.length > 0" class="badge-unidas">
-                    +{{ mesaSeleccionada.mesasHijas.length }} unidas
-                </span>
-            </div>
-            
+            <h2>{{ mesaSeleccionada.nombre }}</h2>
             <div class="ticket-top-controls">
-                 <button mat-icon-button 
-                        [color]="mesaSeleccionada.estado === 'libre' ? 'accent' : 'warn'"
-                        matTooltip="{{ mesaSeleccionada.estado === 'libre' ? 'Marcar Ocupada' : 'Liberar Mesa' }}"
-                        (click)="cambiarEstadoManual()">
+                 <button mat-icon-button color="warn" (click)="cambiarEstadoManual()">
                     <mat-icon>{{ mesaSeleccionada.estado === 'libre' ? 'touch_app' : 'block' }}</mat-icon>
                  </button>
-                 <span class="badge-items">{{ mesaSeleccionada.carrito.length }} items</span>
             </div>
         </div>
         
         <div class="lista-scroll">
-            <mat-list role="list">
-            <mat-list-item *ngFor="let item of mesaSeleccionada.carrito; let i = index" class="item-lista">
-                <div matListItemTitle class="titulo-item-ticket">
-                    {{ item.descripcion }} 
-                    
-                    <button mat-icon-button class="btn-editar-precio" (click)="editarPrecio(item)">
-                        <mat-icon>edit</mat-icon>
-                    </button>
-                    
-                    <span class="precio-unitario">(Q{{ item.precio }})</span>
-                </div>
-                <div matListItemLine class="controles-cantidad">
+            <mat-list>
+            <mat-list-item *ngFor="let item of mesaSeleccionada.carrito; let i = index">
+                <div matListItemTitle>{{ item.descripcion }}</div>
+                <div matListItemLine class="controles-linea">
                     <button mat-icon-button color="warn" (click)="eliminarDelCarrito(i)"><mat-icon>delete</mat-icon></button>
-                    <div class="bloque-mas-menos">
-                        <button mat-icon-button class="btn-mini" (click)="bajarCantidad(item)" [disabled]="item.cantidad <= 1"><mat-icon>remove_circle_outline</mat-icon></button>
-                        <span class="numero-cantidad">{{ item.cantidad }}</span>
-                        <button mat-icon-button class="btn-mini" (click)="subirCantidad(item)"><mat-icon>add_circle_outline</mat-icon></button>
-                    </div>
-                    <div class="subtotal-item">Q{{ item.subtotal | number:'1.2-2' }}</div>
+                    <button mat-icon-button (click)="bajarCantidad(item)"><mat-icon>remove</mat-icon></button>
+                    <span>{{ item.cantidad }}</span>
+                    <button mat-icon-button (click)="subirCantidad(item)"><mat-icon>add</mat-icon></button>
+                    <span class="subtotal">Q{{ item.subtotal | number:'1.2-2' }}</span>
                 </div>
-                <mat-divider></mat-divider>
             </mat-list-item>
             </mat-list>
-            <div *ngIf="mesaSeleccionada.carrito.length === 0" class="mensaje-vacio">
-                <p>{{ mesaSeleccionada.estado === 'libre' ? 'Disponible' : 'Ocupada' }}</p>
-            </div>
         </div>
     
         <div class="footer-ticket">
-            <button *ngIf="mesaSeleccionada.mesasHijas.length > 0" 
-                    mat-stroked-button color="warn" class="boton-desagrupar" 
-                    (click)="desagruparMesaActual()">
-            <mat-icon>link_off</mat-icon> DESAGRUPAR
-            </button>
-
             <div class="total-bloque">
-            <h3>Total:</h3>
-            <h1>Q{{ mesaSeleccionada.total | number:'1.2-2' }}</h1>
+                <span>Total:</span>
+                <h1>Q{{ mesaSeleccionada.total | number:'1.2-2' }}</h1>
             </div>
-    
             <div class="botones-accion">
-                <button mat-stroked-button color="primary" class="boton-salir" (click)="regresarAlMapa()">
-                <mat-icon>arrow_back</mat-icon> SALIR
-                </button>
-                <button mat-raised-button color="warn" class="boton-cobrar" 
-                        [disabled]="mesaSeleccionada.carrito.length === 0" (click)="irAPagar()">
-                <mat-icon>attach_money</mat-icon> COBRAR
-                </button>
+                <button mat-stroked-button color="primary" (click)="regresarAlMapa()">Salir</button>
+                <button mat-raised-button color="warn" [disabled]="mesaSeleccionada.carrito.length === 0" (click)="irAPagar()">Cobrar</button>
             </div>
         </div>
       </ng-container>
 
       <ng-container *ngIf="mostrandoPantallaPago">
         <div class="pantalla-pago-container">
-            <div class="header-pago">
-                <mat-icon>payments</mat-icon><h2>Cobrar</h2>
-            </div>
+            <h2>Cobrar</h2>
             <div class="resumen-final">
-                <p>Total a Pagar</p><div class="total-gigante">Q{{ mesaSeleccionada.total | number:'1.2-2' }}</div>
-            </div>
-            <div class="zona-input-pago">
-                <mat-form-field appearance="outline" class="input-billete-grande">
-                    <mat-label>Efectivo</mat-label>
-                    <span matPrefix>Q &nbsp;</span>
-                    <input matInput type="number" [(ngModel)]="montoRecibido" placeholder="0.00" cdkFocusInitial>
+                <p>Total: Q{{ mesaSeleccionada.total | number:'1.2-2' }}</p>
+                <mat-form-field appearance="outline">
+                    <mat-label>Efectivo Recibido</mat-label>
+                    <input matInput type="number" [(ngModel)]="montoRecibido">
                 </mat-form-field>
-            </div>
-            <div class="zona-cambio-final" *ngIf="montoRecibido !== null">
-                <span>Cambio:</span>
-                <span class="monto-cambio-final" [class.negativo]="cambioCalculado < 0">Q{{ cambioCalculado | number:'1.2-2' }}</span>
+                <p>Cambio: Q{{ cambioCalculado | number:'1.2-2' }}</p>
             </div>
             <div class="botones-pago-final">
-                <button mat-stroked-button color="primary" class="btn-cancelar-pago" (click)="cancelarPago()"><mat-icon>close</mat-icon> CANCELAR</button>
-                <button mat-raised-button color="warn" class="btn-confirmar-pago" 
-                        [disabled]="!montoRecibido || cambioCalculado < 0" (click)="confirmarVentaFinal()">
-                    <mat-icon>print</mat-icon> PAGAR
-                </button>
+                <button mat-button (click)="cancelarPago()">Cancelar</button>
+                <button mat-raised-button color="primary" [disabled]="cambioCalculado < 0" (click)="confirmarVentaFinal()">Confirmar</button>
             </div>
         </div>
       </ng-container>
-
     </div>
   </div>
 </div>

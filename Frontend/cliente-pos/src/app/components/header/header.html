@@ -1,1 +1,21 @@
-<p>header works!</p>
+<nav class="navbar">
+  <div class="logo">RESTAURANTE</div>
+  
+  <ul class="nav-links">
+    @if(canAccess(['mesero', 'cajero'])) { <li><a routerLink="/">Inicio</a></li> }
+    
+    <li><a routerLink="/encargos">Encargos</a></li>
+    
+    @if(canAccess(['cajero'])) { <li><a routerLink="/reportes">Reportes</a></li> }
+    
+    <li><a routerLink="/chat">Chat</a></li>
+    
+    @if(canAccess(['cajero'])) { <li><a routerLink="/productos">Productos</a></li> }
+    
+    <li><a routerLink="/reservaciones">Reservaciones</a></li>
+    
+    @if(canAccess(['cocina'])) { <li><a routerLink="/tickets">Tickets</a></li> }
+    
+    <li><button (click)="logout()" class="btn-logout">Salir</button></li>
+  </ul>
+</nav>
