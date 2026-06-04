@@ -13,8 +13,7 @@ import { CommonModule } from '@angular/common';
 export class LoginComponent {
   loginData = { username: '', password: '' };
   error = '';
-  // Cambia esto
-private API_URL = 'http://192.168.1.220:3000';
+  private API_URL = 'http://localhost:3000';
 
   constructor(private http: HttpClient, private router: Router) {}
 

@@ -1,10 +1,10 @@
 const mariadb = require('mariadb');
 
 const pool = mariadb.createPool({
-  host: 'localhost',
-  user: 'oscar',      
-  password: '13112016',      
-  database: 'restaurante_provisional',
+  host: process.env.DB_HOST || 'db',      
+  user: process.env.DB_USER || 'root',    
+  password: process.env.DB_PASS || 'password_seguro', 
+  database: process.env.DB_NAME || 'restaurante',     
   connectionLimit: 5
 });
 
