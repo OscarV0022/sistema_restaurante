@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
 export class LoginComponent {
   loginData = { username: '', password: '' };
   error = '';
-  private API_URL = 'http://localhost:3000';
+  private API_URL = `http://${window.location.hostname}:3000`;
 
   constructor(private http: HttpClient, private router: Router) {}
 
