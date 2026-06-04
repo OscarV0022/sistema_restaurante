@@ -19,8 +19,8 @@ app.get('/', (req, res) => {
   res.send('<h1>Sistema de Restaurante: ONLINE ✅</h1><p>Si ves esto, el backend modular funciona y está limpio.</p>');
 });
 
-app.listen(port, () => {
-  console.log(`Backend listo en: http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Backend listo y escuchando en 0.0.0.0:${port}`);
 });
 
 console.log("Socket.io conectado con éxito");
