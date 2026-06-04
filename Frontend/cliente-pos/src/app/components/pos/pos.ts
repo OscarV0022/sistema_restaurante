@@ -201,6 +201,10 @@ export class Pos implements OnInit {
             this.mesaSeleccionada.estado = 'libre';
             this.mesaSeleccionada.carrito = [];
             this.mesaSeleccionada.total = 0;
+            
+            // La función que desvincula las mesas unidas
+            this.desagruparMesaActual();
+            
             this.snackBar.open('Mesa LIBERADA', 'OK', { duration: 2000 });
         }
     }
@@ -376,17 +380,8 @@ export class Pos implements OnInit {
         const cambio = this.montoRecibido ? (this.montoRecibido - this.mesaSeleccionada!.total) : 0;
         this.snackBar.open(`✅ Venta Guardada. Cambio: Q${cambio.toFixed(2)}`, 'CERRAR', { duration: 5000 });
         
-        if (this.mesaSeleccionada!.mesasHijas.length > 0) {
-            this.mesaSeleccionada!.mesasHijas.forEach(idHija => {
-                const hija = this.todasLasMesas.find(m => m.id === idHija);
-                if (hija) {
-                    hija.visible = true;
-                    hija.estado = 'libre';
-                    hija.mesasHijas = [];
-                }
-            });
-            this.mesaSeleccionada!.mesasHijas = [];
-        }
+        // Desagrupamos usando la función que ya existe
+        this.desagruparMesaActual();
 
         this.mesaSeleccionada!.carrito = [];
         this.mesaSeleccionada!.total = 0;

@@ -115,8 +115,9 @@ const procesarEncargo = async (req, res) => {
             ventaId, item.descripcion, item.precio, item.cantidad, item.subtotal
         ]);
 
+        // 👇 AQUÍ ESTÁ LA SOLUCIÓN: Cambiamos a descripcion_producto y precio_unitario
         await conn.batch(
-            "INSERT INTO detalle_ventas (id_venta, descripcion, precio, cantidad, subtotal) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO detalle_ventas (id_venta, descripcion_producto, precio_unitario, cantidad, subtotal) VALUES (?, ?, ?, ?, ?)",
             itemsVenta
         );
         console.log(`Encargo #${encargoId} registrado también como Venta #${ventaId}`);
@@ -138,6 +139,26 @@ const obtenerEncargos = async (req, res) => {
     for (let encargo of encargos) {
         const detalles = await conn.query("SELECT * FROM detalle_encargos WHERE id_encargo = ?", [encargo.id]);
         encargo.detalles = detalles;
+    }
+    res.json(encargos);
+  } catch (err) {
+    res.status(500).send(err.message);
+  } finally {
+    if (conn) conn.end();
+  }
+};
+
+const obtenerEncargosPorFecha = async (req, res) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const fecha = req.params.fecha; // formato YYYY-MM-DD
+    const encargos = await conn.query(
+      "SELECT * FROM encargos WHERE DATE(fecha_entrega) = ? ORDER BY fecha_entrega ASC", 
+      [fecha]
+    );
+    for (let encargo of encargos) {
+        encargo.detalles = await conn.query("SELECT * FROM detalle_encargos WHERE id_encargo = ?", [encargo.id]);
     }
     res.json(encargos);
   } catch (err) {
@@ -181,5 +202,5 @@ const pagarEncargo = async (req, res) => {
 
 module.exports = {
   obtenerMenu, guardarVenta, agregarProducto, obtenerResumenVentas,
-  procesarEncargo, obtenerEncargos, pagarEncargo
+  procesarEncargo, obtenerEncargos, pagarEncargo, obtenerEncargosPorFecha
 };

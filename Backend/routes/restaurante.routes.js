@@ -9,5 +9,6 @@ router.get('/resumen-ventas', restauranteController.obtenerResumenVentas);
 router.post('/encargos', restauranteController.procesarEncargo);
 router.get('/encargos', restauranteController.obtenerEncargos);
 router.put('/encargos/:id/pagar', restauranteController.pagarEncargo);
+router.get('/encargos/:fecha', restauranteController.obtenerEncargosPorFecha);
 
 module.exports = router;

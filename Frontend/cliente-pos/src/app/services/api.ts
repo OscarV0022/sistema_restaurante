@@ -6,17 +6,14 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  // OJO: Asegúrate que este puerto coincida con tu server.js (3000 o 3001)
   private apiUrl = 'http://localhost:3000/api'; 
 
   constructor(private http: HttpClient) { }
 
-  // 1. Obtener lista de productos
   getMenu(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/menu`);
   }
 
-  // 2. Enviar la venta al backend
   guardarVenta(venta: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/venta`, venta);
   }
@@ -29,8 +26,12 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/encargos`);
   }
 
+  // --- FUNCIÓN NUEVA PARA BUSCAR POR FECHA ---
+  getEncargosPorFecha(fecha: string) {
+    return this.http.get(`${this.apiUrl}/encargos/${fecha}`);
+  }
+
   pagarEncargo(id: number) {
     return this.http.put(`${this.apiUrl}/encargos/${id}/pagar`, {});
   }
-
 }

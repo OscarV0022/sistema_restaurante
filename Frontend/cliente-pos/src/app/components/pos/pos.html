@@ -3,7 +3,9 @@
   <div *ngIf="!mesaSeleccionada" class="vista-mapa">
     
     <header class="header-profesional">
-        <h1>Mapa de Mesas</h1>
+        <h1 style="display: flex; align-items: center; gap: 10px;">
+            <mat-icon color="primary">storefront</mat-icon> Mapa de Mesas
+        </h1>
         <div class="controles-mapa">
           <button mat-flat-button 
                   [color]="modoAgrupar ? 'warn' : 'primary'" 
@@ -31,15 +33,24 @@
                }"
                (click)="clickEnMesa(mesa)">
              
+              <mat-icon style="font-size: 3rem; width: 3rem; height: 3rem; margin-bottom: 8px; opacity: 0.9;">
+                  {{ 
+                     mesa.seccion === 'PARA LLEVAR' ? 'takeout_dining' : 
+                     (mesa.mesasHijas.length > 0 ? 'groups' : 'table_restaurant') 
+                  }}
+              </mat-icon>
+
               <div class="nombre-mesa">{{ mesa.nombre }}</div>
               
-             
               <div class="estado-mesa">
                 <mat-icon>{{ mesa.estado === 'libre' ? 'check_circle' : 'restaurant' }}</mat-icon>
                 {{ mesa.estado | titlecase }}
               </div>
              
-              <div *ngIf="mesa.total > 0" class="mini-total">Q{{ mesa.total | number:'1.2-2' }}</div>
+              <div *ngIf="mesa.total > 0" class="mini-total">
+                  <mat-icon style="font-size: 1rem; width: 1rem; height: 1rem; vertical-align: middle;">receipt</mat-icon> 
+                  Q{{ mesa.total | number:'1.2-2' }}
+              </div>
           </div>
         </div>
       </mat-tab>
@@ -53,7 +64,7 @@
             <button mat-icon-button (click)="regresarAlMapa()"><mat-icon>arrow_back</mat-icon></button>
             <mat-form-field appearance="fill" class="buscador-full">
                 <mat-icon matPrefix>search</mat-icon>
-                <input matInput placeholder="Buscar producto..." [(ngModel)]="busqueda" (ngModelChange)="filtrarPorBusqueda()">
+                <input matInput placeholder="Buscar producto..." [(ngModel)]="busqueda" (ngModelChange)="filtrarPorBusqueda()" autocomplete="off">
                 <button mat-icon-button matSuffix *ngIf="busqueda" (click)="verCategorias()">
                     <mat-icon>close</mat-icon>
                 </button>
@@ -62,7 +73,8 @@
 
         <div class="grid-categorias" *ngIf="!categoriaSeleccionada && !busqueda">
             <div *ngFor="let cat of categorias" class="btn-categoria" (click)="seleccionarCategoria(cat)">
-                {{ cat }}
+                <mat-icon>restaurant_menu</mat-icon> 
+                <span style="margin-top: 5px;">{{ cat }}</span>
             </div>
         </div>
 
@@ -77,6 +89,7 @@
                         <span class="nombre">{{ item.descripcion }}</span>
                         <span class="precio">Q{{ item.precio }}</span>
                     </div>
+                    <mat-icon color="primary" style="opacity: 0.8;">add_shopping_cart</mat-icon>
                 </mat-card>
             </div>
         </div>
@@ -86,9 +99,12 @@
       
       <ng-container *ngIf="!mostrandoPantallaPago">
         <div class="header-ticket">
-            <h2>{{ mesaSeleccionada.nombre }}</h2>
+            <h2 style="display: flex; align-items: center; gap: 10px;">
+                <mat-icon>{{ mesaSeleccionada.seccion === 'PARA LLEVAR' ? 'takeout_dining' : 'table_restaurant' }}</mat-icon> 
+                {{ mesaSeleccionada.nombre }}
+            </h2>
             <div class="ticket-top-controls">
-                 <button mat-icon-button color="warn" (click)="cambiarEstadoManual()">
+                 <button mat-icon-button color="warn" (click)="cambiarEstadoManual()" matTooltip="Cambiar estado manual">
                     <mat-icon>{{ mesaSeleccionada.estado === 'libre' ? 'touch_app' : 'block' }}</mat-icon>
                  </button>
             </div>
@@ -100,41 +116,69 @@
                 <div matListItemTitle>{{ item.descripcion }}</div>
                 <div matListItemLine class="controles-linea">
                     <button mat-icon-button color="warn" (click)="eliminarDelCarrito(i)"><mat-icon>delete</mat-icon></button>
-                    <button mat-icon-button (click)="bajarCantidad(item)"><mat-icon>remove</mat-icon></button>
-                    <span>{{ item.cantidad }}</span>
-                    <button mat-icon-button (click)="subirCantidad(item)"><mat-icon>add</mat-icon></button>
-                    <span class="subtotal">Q{{ item.subtotal | number:'1.2-2' }}</span>
+                    <button mat-icon-button (click)="bajarCantidad(item)"><mat-icon>remove_circle_outline</mat-icon></button>
+                    <span style="font-weight: bold; font-size: 1.1rem; width: 20px; text-align: center;">{{ item.cantidad }}</span>
+                    <button mat-icon-button color="primary" (click)="subirCantidad(item)"><mat-icon>add_circle_outline</mat-icon></button>
+                    <span class="subtotal" style="margin-left: auto; font-weight: bold;">Q{{ item.subtotal | number:'1.2-2' }}</span>
                 </div>
             </mat-list-item>
             </mat-list>
         </div>
     
         <div class="footer-ticket">
+            
+            <button *ngIf="mesaSeleccionada.mesasHijas.length > 0" 
+                    mat-stroked-button 
+                    color="accent" 
+                    (click)="desagruparMesaActual()"
+                    style="width: 100%; margin-bottom: 15px; border-width: 2px;">
+                <mat-icon>link_off</mat-icon> Separar Mesas
+            </button>
+
             <div class="total-bloque">
-                <span>Total:</span>
+                <span style="font-size: 1.2rem; color: #757575;">Total:</span>
                 <h1>Q{{ mesaSeleccionada.total | number:'1.2-2' }}</h1>
             </div>
             <div class="botones-accion">
-                <button mat-stroked-button color="primary" (click)="regresarAlMapa()">Salir</button>
-                <button mat-raised-button color="warn" [disabled]="mesaSeleccionada.carrito.length === 0" (click)="irAPagar()">Cobrar</button>
+                <button mat-stroked-button color="primary" (click)="regresarAlMapa()">
+                    <mat-icon>logout</mat-icon> Salir
+                </button>
+                <button mat-raised-button color="warn" [disabled]="mesaSeleccionada.carrito.length === 0" (click)="irAPagar()">
+                    <mat-icon>point_of_sale</mat-icon> Cobrar
+                </button>
             </div>
         </div>
       </ng-container>
 
       <ng-container *ngIf="mostrandoPantallaPago">
         <div class="pantalla-pago-container">
-            <h2>Cobrar</h2>
-            <div class="resumen-final">
-                <p>Total: Q{{ mesaSeleccionada.total | number:'1.2-2' }}</p>
-                <mat-form-field appearance="outline">
+            <h2 style="display: flex; align-items: center; justify-content: center; gap: 10px; border-bottom: 2px solid #eee; padding-bottom: 15px;">
+                <mat-icon color="primary" style="transform: scale(1.5);">point_of_sale</mat-icon> Procesar Pago
+            </h2>
+            <div class="resumen-final" style="margin-top: 30px;">
+                <p style="font-size: 1.2rem; color: #757575;">Total a pagar:</p>
+                <h1 style="font-size: 3rem; margin: 10px 0;">Q{{ mesaSeleccionada.total | number:'1.2-2' }}</h1>
+                
+                <mat-form-field appearance="outline" style="width: 100%; margin-top: 20px;">
                     <mat-label>Efectivo Recibido</mat-label>
-                    <input matInput type="number" [(ngModel)]="montoRecibido">
+                    <mat-icon matPrefix style="margin-right: 10px; color: #4caf50;">payments</mat-icon>
+                    <input matInput type="number" [(ngModel)]="montoRecibido" style="font-size: 1.5rem; text-align: center;">
                 </mat-form-field>
-                <p>Cambio: Q{{ cambioCalculado | number:'1.2-2' }}</p>
+                
+                <div style="margin-top: 20px; background: #f5f5f5; padding: 15px; border-radius: 8px;">
+                    <p style="margin: 0; font-size: 1.1rem;">Cambio a entregar:</p>
+                    <h2 style="margin: 5px 0 0 0; color: #2e7d32; font-size: 2rem;">
+                        <mat-icon style="vertical-align: middle;">currency_exchange</mat-icon> Q{{ cambioCalculado | number:'1.2-2' }}
+                    </h2>
+                </div>
             </div>
             <div class="botones-pago-final">
-                <button mat-button (click)="cancelarPago()">Cancelar</button>
-                <button mat-raised-button color="primary" [disabled]="cambioCalculado < 0" (click)="confirmarVentaFinal()">Confirmar</button>
+                <button mat-stroked-button color="warn" (click)="cancelarPago()">
+                    <mat-icon>close</mat-icon> Cancelar
+                </button>
+                <button mat-raised-button color="primary" [disabled]="cambioCalculado < 0" (click)="confirmarVentaFinal()">
+                    <mat-icon>check_circle</mat-icon> Confirmar
+                </button>
             </div>
         </div>
       </ng-container>

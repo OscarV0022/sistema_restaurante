@@ -1,16 +1,23 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, MatIconModule],
   templateUrl: './header.html',
   styleUrls: ['./header.css']
 })
 export class Header {
+  menuAbierto = false;
+
   constructor(private router: Router) {}
+
+  toggleMenu() {
+    this.menuAbierto = !this.menuAbierto;
+  }
 
   getRole() { return localStorage.getItem('rol'); }
 

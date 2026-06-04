@@ -1,21 +1,25 @@
-<nav class="navbar">
-  <div class="logo">RESTAURANTE</div>
+<nav class="navbar mat-elevation-z4">
+  <div class="logo">Restaurante <span class="logo-accent">Chiantlequita</span></div>
   
-  <ul class="nav-links">
-    @if(canAccess(['mesero', 'cajero'])) { <li><a routerLink="/">Inicio</a></li> }
+  <button class="hamburger-btn" (click)="toggleMenu()">
+    <mat-icon>{{ menuAbierto ? 'close' : 'menu' }}</mat-icon>
+  </button>
+  
+  <ul class="nav-links" [class.show-menu]="menuAbierto">
+    @if(canAccess(['mesero', 'cajero'])) { <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="toggleMenu()">Inicio</a></li> }
     
-    <li><a routerLink="/encargos">Encargos</a></li>
+    <li><a routerLink="/encargos" routerLinkActive="active" (click)="toggleMenu()">Encargos</a></li>
     
-    @if(canAccess(['cajero'])) { <li><a routerLink="/reportes">Reportes</a></li> }
+    @if(canAccess(['cajero'])) { <li><a routerLink="/reportes" routerLinkActive="active" (click)="toggleMenu()">Reportes</a></li> }
     
-    <li><a routerLink="/chat">Chat</a></li>
+    <li><a routerLink="/chat" routerLinkActive="active" (click)="toggleMenu()">Chat</a></li>
     
-    @if(canAccess(['cajero'])) { <li><a routerLink="/productos">Productos</a></li> }
+    @if(canAccess(['cajero'])) { <li><a routerLink="/productos" routerLinkActive="active" (click)="toggleMenu()">Productos</a></li> }
     
-    <li><a routerLink="/reservaciones">Reservaciones</a></li>
+    <li><a routerLink="/reservaciones" routerLinkActive="active" (click)="toggleMenu()">Reservaciones</a></li>
     
-    @if(canAccess(['cocina'])) { <li><a routerLink="/tickets">Tickets</a></li> }
+    @if(canAccess(['cocina'])) { <li><a routerLink="/tickets" routerLinkActive="active" (click)="toggleMenu()">Tickets</a></li> }
     
-    <li><button (click)="logout()" class="btn-logout">Salir</button></li>
+    <li><button (click)="logout(); toggleMenu()" class="btn-logout">Salir</button></li>
   </ul>
 </nav>
