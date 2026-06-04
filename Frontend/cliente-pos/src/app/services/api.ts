@@ -11,27 +11,27 @@ export class ApiService {
   constructor(private http: HttpClient) { }
 
   getMenu(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/menu`);
+    return this.http.get<any[]>(`${this.apiUrl}/api/menu`);
   }
 
   guardarVenta(venta: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/venta`, venta);
+    return this.http.post<any>(`${this.apiUrl}/api/venta`, venta);
   }
 
   guardarEncargo(encargo: any) {
-    return this.http.post(`${this.apiUrl}/encargos`, encargo);
+    return this.http.post(`${this.apiUrl}/api/encargos`, encargo);
   }
 
   getEncargos() {
-    return this.http.get(`${this.apiUrl}/encargos`);
+    return this.http.get(`${this.apiUrl}/api/encargos`);
   }
 
   // --- FUNCIÓN NUEVA PARA BUSCAR POR FECHA ---
   getEncargosPorFecha(fecha: string) {
-    return this.http.get(`${this.apiUrl}/encargos/${fecha}`);
+    return this.http.get(`${this.apiUrl}/api/encargos/${fecha}`);
   }
 
   pagarEncargo(id: number) {
-    return this.http.put(`${this.apiUrl}/encargos/${id}/pagar`, {});
+    return this.http.put(`${this.apiUrl}/api/encargos/${id}/pagar`, {});
   }
 }
