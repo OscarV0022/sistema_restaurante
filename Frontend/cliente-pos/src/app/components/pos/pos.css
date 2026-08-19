@@ -89,6 +89,13 @@
     color: #c62828;
 }
 
+/* --- CLASE NUEVA: ESTADO EN ESPERA --- */
+.tarjeta-mesa.en-espera {
+    background-color: #fff3e0;
+    border-color: #ff9800;
+    color: #e65100;
+}
+
 .origen-seleccionado {
     outline: 4px solid #ff9800 !important;
     transform: scale(1.05);
@@ -333,4 +340,16 @@
 .botones-pago-final button {
     height: 55px;
     flex: 1;
+}
+
+.mini-mesero {
+    margin-top: 6px;
+    background: rgba(0, 0, 0, 0.06);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 3px;
 }

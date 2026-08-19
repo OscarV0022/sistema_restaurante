@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api';
+import { io, Socket } from 'socket.io-client';
 
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatCardModule } from '@angular/material/card';
@@ -19,11 +20,12 @@ interface Mesa {
   id: number;
   nombre: string;
   seccion: string;
-  estado: 'libre' | 'ocupada';
+  estado: 'libre' | 'en-espera' | 'ocupada';
   visible: boolean;
   mesasHijas: number[];
   carrito: any[];
   total: number;
+  atendidoPor?: string;
 }
 
 @Component({
@@ -32,6 +34,7 @@ interface Mesa {
   imports: [
     CommonModule,
     FormsModule,
+    RouterModule,
     MatGridListModule,
     MatCardModule,
     MatButtonModule,
@@ -46,7 +49,7 @@ interface Mesa {
   templateUrl: './pos.html',
   styleUrls: ['./pos.css']
 })
-export class Pos implements OnInit {
+export class Pos implements OnInit, OnDestroy {
   
   // --- MENÚ ---
   menu: any[] = [];
@@ -76,6 +79,9 @@ export class Pos implements OnInit {
   mostrandoPantallaPago: boolean = false; 
   montoRecibido: number | null = null;
 
+  // --- SOCKET.IO ---
+  private socket!: Socket;
+
   constructor(
     private api: ApiService, 
     private snackBar: MatSnackBar,
@@ -84,8 +90,40 @@ export class Pos implements OnInit {
 
   ngOnInit(): void {
     this.cargarMenu();
-    
-    // Auto-corrección de memoria
+    this.inicializarSocket();
+  }
+
+  ngOnDestroy(): void {
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+  }
+
+  // --- OBTENER NOMBRE DEL USUARIO DE FORMA SEGURA ---
+  private obtenerNombreUsuario(): string {
+    try {
+      const usuarioLocal = localStorage.getItem('usuario');
+      if (usuarioLocal) {
+        const parsed = JSON.parse(usuarioLocal);
+        if (parsed && parsed.nombre) return parsed.nombre;
+      }
+
+      const token = localStorage.getItem('token');
+      if (token) {
+        const payloadBase64 = token.split('.')[1];
+        const payloadJson = atob(payloadBase64);
+        const payload = JSON.parse(payloadJson);
+        if (payload && payload.nombre) return payload.nombre;
+      }
+    } catch (e) {
+      console.error("Error al extraer el nombre del usuario:", e);
+    }
+    return 'Personal';
+  }
+
+  inicializarSocket() {
+    this.socket = io('http://localhost:3000');
+
     const datosCargados = this.cargarEstadoGuardado();
     const tieneParaLlevar = this.todasLasMesas.some(m => m.seccion === 'PARA LLEVAR');
 
@@ -96,16 +134,29 @@ export class Pos implements OnInit {
     } else if (!datosCargados) {
         this.inicializarMesas();
     }
+
+    this.socket.on('sincronizar_mesas', (mesasRemotas: Mesa[]) => {
+      this.todasLasMesas = mesasRemotas;
+      localStorage.setItem('restaurante_mesas', JSON.stringify(this.todasLasMesas));
+      
+      if (this.mesaSeleccionada) {
+        const actualizada = this.todasLasMesas.find(m => m.id === this.mesaSeleccionada!.id);
+        if (actualizada) {
+          this.mesaSeleccionada = actualizada;
+        }
+      }
+    });
   }
 
-  // --- NAVEGACIÓN ---
   irAEncargos() {
     this.router.navigate(['/encargos']);
   }
 
-  // --- PERSISTENCIA ---
   guardarEstado() {
     localStorage.setItem('restaurante_mesas', JSON.stringify(this.todasLasMesas));
+    if (this.socket) {
+      this.socket.emit('actualizar_mesas', this.todasLasMesas);
+    }
   }
 
   cargarEstadoGuardado(): boolean {
@@ -119,7 +170,6 @@ export class Pos implements OnInit {
     return false;
   }
 
-  // --- MENÚ ---
   cargarMenu() {
     this.api.getMenu().subscribe((data: any) => { 
       this.menu = data; 
@@ -147,7 +197,6 @@ export class Pos implements OnInit {
     this.productosVisibles = [];
   }
 
-  // --- MESAS ---
   inicializarMesas() {
     let contadorId = 1;
     this.configuracionSecciones.forEach(config => {
@@ -178,6 +227,13 @@ export class Pos implements OnInit {
       this.gestionarAgrupacion(mesa);
       return;
     }
+    
+    if (mesa.estado === 'libre') {
+      mesa.estado = 'en-espera';
+      mesa.atendidoPor = this.obtenerNombreUsuario();
+      this.guardarEstado();
+    }
+
     this.montoRecibido = null; 
     this.mostrandoPantallaPago = false; 
     this.verCategorias(); 
@@ -185,6 +241,37 @@ export class Pos implements OnInit {
   }
 
   regresarAlMapa() { 
+      if (this.mesaSeleccionada) {
+        if (this.mesaSeleccionada.carrito.length === 0) {
+          const confirmar = confirm('¿Estás seguro de regresar? No se ha ordenado nada.');
+          if (confirmar) {
+            this.mesaSeleccionada.estado = 'libre';
+            this.mesaSeleccionada.atendidoPor = undefined;
+            this.desagruparMesaActual();
+            this.guardarEstado();
+          } else {
+            return; 
+          }
+        } else {
+          this.mesaSeleccionada.estado = 'ocupada';
+          
+          // --- ENVIAR ORDEN A COCINA ---
+          if (this.socket) {
+            const ticketCocina = {
+              mesa: this.mesaSeleccionada.nombre,
+              atendidoPor: this.mesaSeleccionada.atendidoPor,
+              detalles: this.mesaSeleccionada.carrito.map(item => ({
+                descripcion: item.descripcion,
+                cantidad: item.cantidad
+              }))
+            };
+            this.socket.emit('nueva_orden', ticketCocina);
+          }
+
+          this.guardarEstado();
+        }
+      }
+
       this.mesaSeleccionada = null; 
       this.montoRecibido = null;
       this.mostrandoPantallaPago = false;
@@ -194,6 +281,10 @@ export class Pos implements OnInit {
   cambiarEstadoManual() {
     if (!this.mesaSeleccionada) return;
     if (this.mesaSeleccionada.estado === 'libre') {
+        this.mesaSeleccionada.estado = 'en-espera';
+        this.mesaSeleccionada.atendidoPor = this.obtenerNombreUsuario();
+        this.snackBar.open('Marcada como EN ESPERA', 'OK', { duration: 2000 });
+    } else if (this.mesaSeleccionada.estado === 'en-espera') {
         this.mesaSeleccionada.estado = 'ocupada';
         this.snackBar.open('Marcada como OCUPADA', 'OK', { duration: 2000 });
     } else {
@@ -201,17 +292,14 @@ export class Pos implements OnInit {
             this.mesaSeleccionada.estado = 'libre';
             this.mesaSeleccionada.carrito = [];
             this.mesaSeleccionada.total = 0;
-            
-            // La función que desvincula las mesas unidas
+            this.mesaSeleccionada.atendidoPor = undefined;
             this.desagruparMesaActual();
-            
             this.snackBar.open('Mesa LIBERADA', 'OK', { duration: 2000 });
         }
     }
     this.guardarEstado();
   }
 
-  // --- AGRUPAR ---
   toggleModoAgrupar() {
     this.modoAgrupar = !this.modoAgrupar;
     this.mesaOrigen = null;
@@ -246,6 +334,7 @@ export class Pos implements OnInit {
     origen.carrito = [];
     origen.total = 0;
     origen.estado = 'libre'; 
+    origen.atendidoPor = undefined;
 
     this.calcularTotalMesaEspecifica(destino);
     if (destino.carrito.length > 0) destino.estado = 'ocupada';
@@ -266,6 +355,7 @@ export class Pos implements OnInit {
       if (mesaHija) {
         mesaHija.visible = true;
         mesaHija.estado = 'libre';
+        mesaHija.atendidoPor = undefined;
         mesaHija.mesasHijas = [];
       }
     });
@@ -274,10 +364,13 @@ export class Pos implements OnInit {
     this.guardarEstado();
   }
 
-  // --- CARRITO ---
   agregarAlCarrito(producto: any) {
     if (!this.mesaSeleccionada) return;
     this.mesaSeleccionada.estado = 'ocupada';
+    
+    if (!this.mesaSeleccionada.atendidoPor) {
+      this.mesaSeleccionada.atendidoPor = this.obtenerNombreUsuario();
+    }
     
     const existe = this.mesaSeleccionada.carrito.find(item => item.descripcion === producto.descripcion);
     if (existe) {
@@ -318,11 +411,9 @@ export class Pos implements OnInit {
     }
   }
 
-  // --- NUEVA FUNCIÓN: EDITAR PRECIO ---
   editarPrecio(item: any) {
     if (!this.mesaSeleccionada) return;
 
-    // Preguntamos el nuevo precio
     const nuevoPrecioStr = prompt(`Ingresa precio especial para "${item.descripcion}":`, item.precio);
 
     if (nuevoPrecioStr !== null) {
@@ -330,9 +421,7 @@ export class Pos implements OnInit {
 
       if (!isNaN(nuevoPrecio) && nuevoPrecio >= 0) {
         item.precio = nuevoPrecio;
-        // Recalcular subtotal
         item.subtotal = item.cantidad * item.precio;
-        // Recalcular total de la mesa
         this.calcularTotalMesaEspecifica(this.mesaSeleccionada);
         this.guardarEstado();
         
@@ -347,7 +436,6 @@ export class Pos implements OnInit {
     mesa.total = mesa.carrito.reduce((acc, item) => acc + item.subtotal, 0);
   }
 
-  // --- PAGO ---
   irAPagar() {
     this.mostrandoPantallaPago = true;
     this.montoRecibido = null; 
@@ -380,12 +468,17 @@ export class Pos implements OnInit {
         const cambio = this.montoRecibido ? (this.montoRecibido - this.mesaSeleccionada!.total) : 0;
         this.snackBar.open(`✅ Venta Guardada. Cambio: Q${cambio.toFixed(2)}`, 'CERRAR', { duration: 5000 });
         
-        // Desagrupamos usando la función que ya existe
+        // --- LIMPIAR TICKET DE COCINA AL COBRAR ---
+        if (this.socket && this.mesaSeleccionada) {
+          this.socket.emit('limpiar_ticket', this.mesaSeleccionada.nombre);
+        }
+
         this.desagruparMesaActual();
 
         this.mesaSeleccionada!.carrito = [];
         this.mesaSeleccionada!.total = 0;
         this.mesaSeleccionada!.estado = 'libre';
+        this.mesaSeleccionada!.atendidoPor = undefined;
         this.mesaSeleccionada = null; 
         this.montoRecibido = null;
         this.mostrandoPantallaPago = false;

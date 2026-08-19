@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+
 @Component({
   selector: 'app-login',
   templateUrl: './login.html',
@@ -23,8 +24,13 @@ export class LoginComponent {
         next: (res) => {
           localStorage.setItem('token', res.token);
           localStorage.setItem('rol', res.usuario.rol);
+          localStorage.setItem('usuario', JSON.stringify(res.usuario));
           
-          this.router.navigate(['/ventas']);
+          if (res.usuario.rol === 'cocina') {
+            this.router.navigate(['/tickets']);
+          } else {
+            this.router.navigate(['/']);
+          }
         },
         error: (err) => {
           this.error = 'Usuario o contraseña incorrectos';

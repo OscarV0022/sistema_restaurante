@@ -1,0 +1,257 @@
+* {
+    box-sizing: border-box;
+}
+
+.cocina-layout {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f0f2f5;
+    font-family: 'Roboto', sans-serif;
+    overflow: hidden;
+}
+
+.toolbar-cocina {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    flex-shrink: 0;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.titulo-app {
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.contador-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+}
+
+.contenido-cocina {
+    padding: 24px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.sin-tickets {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 65vh;
+    color: #7f8c8d;
+    text-align: center;
+}
+
+.icono-vacio {
+    font-size: 6rem !important;
+    width: 6rem !important;
+    height: 6rem !important;
+    color: #bdc3c7;
+    margin-bottom: 10px;
+}
+
+.sin-tickets h2 {
+    margin: 0 0 5px 0;
+    color: #2c3e50;
+    font-size: 1.8rem;
+}
+
+.sin-tickets p {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.grid-tickets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.tarjeta-ticket {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.25s ease-in-out;
+    border-left: 8px solid #ff9800; /* Pendientes por defecto */
+}
+
+.tarjeta-ticket:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.tarjeta-ticket.estado-pendientes {
+    border-left-color: #ff9800;
+    background-color: #fffdf9;
+}
+
+.tarjeta-ticket.estado-preparando {
+    border-left-color: #2196f3;
+    background-color: #f4f9fd;
+}
+
+.tarjeta-ticket.estado-completo {
+    border-left-color: #4caf50;
+    background-color: #f2f9f3;
+}
+
+.tarjeta-ticket.minimizado {
+    max-height: 95px;
+    border-left-color: #9e9e9e;
+    background-color: #fafafa;
+    padding: 14px 18px;
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #edf2f7;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+}
+
+.mesa-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #2c3e50;
+}
+
+.mesa-info mat-icon {
+    color: #34495e;
+}
+
+.ticket-header h3 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.btn-minimizar {
+    font-size: 0.8rem;
+    height: 30px;
+    line-height: 28px;
+    padding: 0 10px;
+    border-radius: 8px;
+}
+
+.info-mesero {
+    font-size: 0.95rem;
+    color: #555;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #eef2f7;
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+.info-mesero span {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.lista-contenedor {
+    flex: 1;
+    max-height: 220px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding-right: 4px;
+}
+
+.lista-productos {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.lista-productos li {
+    padding: 8px 0;
+    border-bottom: 1px dashed #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.badge-cantidad {
+    background: #e74c3c;
+    color: white;
+    font-weight: 800;
+    font-size: 0.95rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    min-width: 32px;
+    text-align: center;
+}
+
+.descripcion-producto {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.ticket-acciones {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.btn-accion {
+    flex: 1;
+    height: 44px;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.btn-preparando {
+    background-color: #2196f3 !important;
+    color: white !important;
+}
+
+.btn-completo {
+    background-color: #4caf50 !important;
+    color: white !important;
+}
+
+.resumen-minimo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+}
+
+.minimo-texto {
+    font-size: 0.95rem;
+    color: #4a5568;
+}
+
+.badge-estado {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-estado.pendientes { background: #ffe0b2; color: #d35400; }
+.badge-estado.preparando { background: #d0e8fd; color: #1b4f72; }
+.badge-estado.completo { background: #d4efdf; color: #1e8449; }

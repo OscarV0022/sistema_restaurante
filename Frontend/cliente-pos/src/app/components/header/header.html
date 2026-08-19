@@ -19,6 +19,8 @@
     <li><a routerLink="/reservaciones" routerLinkActive="active" (click)="toggleMenu()">Reservaciones</a></li>
     
     @if(canAccess(['cocina'])) { <li><a routerLink="/tickets" routerLinkActive="active" (click)="toggleMenu()">Tickets</a></li> }
+
+    @if(canAccess(['admin'])) { <li><a routerLink="/usuarios" routerLinkActive="active" (click)="toggleMenu()">Usuarios</a></li> }
     
     <li><button (click)="logout(); toggleMenu()" class="btn-logout">Salir</button></li>
   </ul>

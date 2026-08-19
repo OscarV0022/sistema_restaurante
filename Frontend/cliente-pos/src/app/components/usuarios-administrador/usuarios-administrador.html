@@ -1,0 +1,41 @@
+<div class="admin-container">
+  <h2>Gestión de Usuarios</h2>
+
+  <!-- Formulario -->
+  <div class="form-container">
+    <input [(ngModel)]="usuario.username" placeholder="Usuario">
+    <input [(ngModel)]="usuario.nombre" placeholder="Nombre completo">
+    <input [(ngModel)]="usuario.password" type="password" placeholder="Contraseña (opcional al editar)">
+    <select [(ngModel)]="usuario.rol">
+      <option value="admin">Admin</option>
+      <option value="cajero">Cajero</option>
+      <option value="mesero">Mesero</option>
+      <option value="cocina">Cocina</option>
+    </select>
+    <button (click)="guardar()">{{ esEdicion ? 'Actualizar' : 'Crear' }}</button>
+    <button *ngIf="esEdicion" (click)="resetForm()">Cancelar</button>
+  </div>
+
+  <!-- Tabla de usuarios -->
+  <table class="usuarios-table">
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Nombre</th>
+        <th>Rol</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let u of usuarios">
+        <td>{{ u.username }}</td>
+        <td>{{ u.nombre }}</td>
+        <td>{{ u.rol }}</td>
+        <td>
+          <button (click)="editar(u)">Editar</button>
+          <button (click)="eliminar(u.id)">Eliminar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

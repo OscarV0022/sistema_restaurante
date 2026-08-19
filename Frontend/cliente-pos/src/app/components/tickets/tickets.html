@@ -1,0 +1,99 @@
+<div class="cocina-layout">
+  
+  <!-- Header Profesional de Cocina -->
+  <mat-toolbar color="primary" class="toolbar-cocina mat-elevation-z4">
+    <div class="toolbar-left">
+      <button mat-icon-button (click)="irAlPos()" matTooltip="Regresar al Mapa de Mesas">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <span class="titulo-app">
+        <mat-icon class="icono-titulo">restaurant_menu</mat-icon> Pantalla de Cocina &bull; Pedidos Activos
+      </span>
+    </div>
+    <div class="toolbar-right">
+      <span class="contador-badge">
+        Órdenes: <strong>{{ tickets.length }}</strong>
+      </span>
+    </div>
+  </mat-toolbar>
+
+  <!-- Contenedor Principal de Tickets -->
+  <div class="contenido-cocina">
+    
+    <!-- Estado Vacío -->
+    <div *ngIf="tickets.length === 0" class="sin-tickets">
+      <mat-icon class="icono-vacio">assignment_turned_in</mat-icon>
+      <h2>¡Todo al día por aquí!</h2>
+      <p>No hay órdenes pendientes en este momento.</p>
+    </div>
+
+    <!-- Grid de Tarjetas de Cocina -->
+    <div class="grid-tickets">
+      <div *ngFor="let t of tickets" 
+           class="tarjeta-ticket mat-elevation-z3" 
+           [ngClass]="{
+             'minimizado': t.minimizado, 
+             'estado-pendientes': t.estado === 'pendientes',
+             'estado-preparando': t.estado === 'preparando', 
+             'estado-completo': t.estado === 'completo'
+           }">
+        
+        <!-- Header de la Tarjeta -->
+        <div class="ticket-header">
+          <div class="mesa-info">
+            <mat-icon>{{ t.mesa.includes('Orden') ? 'takeout_dining' : 'table_restaurant' }}</mat-icon>
+            <h3>{{ t.mesa }}</h3>
+          </div>
+          <button mat-stroked-button class="btn-minimizar" (click)="toggleMinimizar(t)">
+            <mat-icon>{{ t.minimizado ? 'unfold_more' : 'unfold_less' }}</mat-icon>
+            {{ t.minimizado ? 'Expandir' : 'Minimizar' }}
+          </button>
+        </div>
+
+        <!-- Vista Completa (Expandida) -->
+        <ng-container *ngIf="!t.minimizado">
+          <div class="info-mesero">
+            <mat-icon>person_outline</mat-icon> 
+            Atiende: <span>{{ t.atendidoPor || 'Personal' }}</span>
+          </div>
+
+          <div class="lista-contenedor">
+            <ul class="lista-productos">
+              <li *ngFor="let item of t.detalles">
+                <span class="badge-cantidad">{{ item.cantidad }}x</span>
+                <span class="descripcion-producto">{{ item.descripcion }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="ticket-acciones">
+            <button mat-flat-button 
+                    class="btn-accion btn-preparando"
+                    [disabled]="t.estado === 'preparando'"
+                    (click)="cambiarEstado(t, 'preparando')">
+              <mat-icon>hourglass_top</mat-icon> Preparando
+            </button>
+            <button mat-flat-button 
+                    class="btn-accion btn-completo"
+                    (click)="cambiarEstado(t, 'completo')">
+              <mat-icon>check_circle</mat-icon> Completo
+            </button>
+          </div>
+        </ng-container>
+
+        <!-- Vista Minimizada (Estilo Resumen Discreto) -->
+        <ng-container *ngIf="t.minimizado">
+          <div class="resumen-minimo">
+            <div class="minimo-texto">
+              <span class="mesero-min"><strong>Mesero:</strong> {{ t.atendidoPor || 'Personal' }}</span>
+            </div>
+            <div class="badge-estado" [ngClass]="t.estado">
+              {{ t.estado === 'pendientes' ? 'Pendiente' : (t.estado === 'preparando' ? 'Preparando' : 'Completo') }}
+            </div>
+          </div>
+        </ng-container>
+
+      </div>
+    </div>
+  </div>
+</div>

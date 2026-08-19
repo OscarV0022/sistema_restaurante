@@ -6,7 +6,13 @@
         <h1 style="display: flex; align-items: center; gap: 10px;">
             <mat-icon color="primary">storefront</mat-icon> Mapa de Mesas
         </h1>
-        <div class="controles-mapa">
+        <div class="controles-mapa" style="display: flex; gap: 10px;">
+          
+          <!-- BOTÓN PARA IR A LA VISTA DE COCINA / TICKETS -->
+          <button mat-flat-button color="accent" routerLink="/tickets">
+            <mat-icon>receipt_long</mat-icon> Cocina
+          </button>
+
           <button mat-flat-button 
                   [color]="modoAgrupar ? 'warn' : 'primary'" 
                   (click)="toggleModoAgrupar()">
@@ -29,6 +35,7 @@
                [ngClass]="{
                  'ocupada': mesa.estado === 'ocupada', 
                  'libre': mesa.estado === 'libre', 
+                 'en-espera': mesa.estado === 'en-espera',
                  'origen-seleccionado': mesaOrigen?.id === mesa.id
                }"
                (click)="clickEnMesa(mesa)">
@@ -43,8 +50,14 @@
               <div class="nombre-mesa">{{ mesa.nombre }}</div>
               
               <div class="estado-mesa">
-                <mat-icon>{{ mesa.estado === 'libre' ? 'check_circle' : 'restaurant' }}</mat-icon>
-                {{ mesa.estado | titlecase }}
+                <mat-icon>{{ mesa.estado === 'libre' ? 'check_circle' : (mesa.estado === 'en-espera' ? 'hourglass_empty' : 'restaurant') }}</mat-icon>
+                {{ mesa.estado === 'en-espera' ? 'En Espera' : (mesa.estado | titlecase) }}
+              </div>
+
+              <!-- Muestra quién atiende en tiempo real -->
+              <div *ngIf="mesa.estado !== 'libre' && mesa.atendidoPor" class="mini-mesero">
+                  <mat-icon style="font-size: 0.9rem; width: 0.9rem; height: 0.9rem; vertical-align: middle;">person</mat-icon> 
+                  {{ mesa.atendidoPor }}
               </div>
              
               <div *ngIf="mesa.total > 0" class="mini-total">
@@ -115,10 +128,11 @@
             <mat-list-item *ngFor="let item of mesaSeleccionada.carrito; let i = index">
                 <div matListItemTitle>{{ item.descripcion }}</div>
                 <div matListItemLine class="controles-linea">
-                    <button mat-icon-button color="warn" (click)="eliminarDelCarrito(i)"><mat-icon>delete</mat-icon></button>
+                    <button mat-icon-button color="warn" (click)="eliminarDelCarrito(i)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
                     <button mat-icon-button (click)="bajarCantidad(item)"><mat-icon>remove_circle_outline</mat-icon></button>
                     <span style="font-weight: bold; font-size: 1.1rem; width: 20px; text-align: center;">{{ item.cantidad }}</span>
                     <button mat-icon-button color="primary" (click)="subirCantidad(item)"><mat-icon>add_circle_outline</mat-icon></button>
+                    <button mat-icon-button color="accent" (click)="editarPrecio(item)" matTooltip="Cambiar precio"><mat-icon>edit</mat-icon></button>
                     <span class="subtotal" style="margin-left: auto; font-weight: bold;">Q{{ item.subtotal | number:'1.2-2' }}</span>
                 </div>
             </mat-list-item>
@@ -141,7 +155,7 @@
             </div>
             <div class="botones-accion">
                 <button mat-stroked-button color="primary" (click)="regresarAlMapa()">
-                    <mat-icon>logout</mat-icon> Salir
+                    <mat-icon>check</mat-icon> Ordenar
                 </button>
                 <button mat-raised-button color="warn" [disabled]="mesaSeleccionada.carrito.length === 0" (click)="irAPagar()">
                     <mat-icon>point_of_sale</mat-icon> Cobrar
