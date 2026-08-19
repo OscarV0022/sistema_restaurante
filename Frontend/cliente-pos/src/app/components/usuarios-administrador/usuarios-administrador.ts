@@ -52,6 +52,7 @@ export class UsuariosAdministradorComponent implements OnInit {
     }
   }
 
+  
   editar(u: any) {
     this.usuario = { ...u, password: '' };
     this.esEdicion = true;
