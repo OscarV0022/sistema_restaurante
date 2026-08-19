@@ -87,4 +87,64 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = { registrarUsuario, login };
+const obtenerUsuarios = async (req, res) => {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        const rows = await conn.query('SELECT id, username, nombre, rol, fecha_registro FROM usuarios');
+        return res.status(200).json(rows);
+    } catch (err) {
+        console.error("Error al obtener usuarios:", err);
+        return res.status(500).json({ message: 'Error interno del servidor' });
+    } finally {
+        if (conn) conn.end();
+    }
+};
+
+const actualizarUsuario = async (req, res) => {
+    let conn;
+    try {
+        const { id } = req.params;
+        const { username, nombre, rol, password } = req.body;
+
+        conn = await pool.getConnection();
+
+        if (password && password.trim() !== "") {
+            const salt = await bcrypt.genSalt(10);
+            const passwordHasheado = await bcrypt.hash(password, salt);
+            await conn.query(
+                'UPDATE usuarios SET username = ?, password = ?, nombre = ?, rol = ? WHERE id = ?',
+                [username, passwordHasheado, nombre, rol, id]
+            );
+        } else {
+            await conn.query(
+                'UPDATE usuarios SET username = ?, nombre = ?, rol = ? WHERE id = ?',
+                [username, nombre, rol, id]
+            );
+        }
+
+        return res.status(200).json({ message: 'Usuario actualizado con éxito' });
+    } catch (err) {
+        console.error("Error al actualizar usuario:", err);
+        return res.status(500).json({ message: 'Error interno del servidor' });
+    } finally {
+        if (conn) conn.end();
+    }
+};
+
+const eliminarUsuario = async (req, res) => {
+    let conn;
+    try {
+        const { id } = req.params;
+        conn = await pool.getConnection();
+        await conn.query('DELETE FROM usuarios WHERE id = ?', [id]);
+        return res.status(200).json({ message: 'Usuario eliminado con éxito' });
+    } catch (err) {
+        console.error("Error al eliminar usuario:", err);
+        return res.status(500).json({ message: 'Error interno del servidor' });
+    } finally {
+        if (conn) conn.end();
+    }
+};
+
+module.exports = { registrarUsuario, login, obtenerUsuarios, actualizarUsuario, eliminarUsuario };

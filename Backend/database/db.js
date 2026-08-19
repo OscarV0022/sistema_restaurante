@@ -1,4 +1,4 @@
-/*const mariadb = require('mariadb');
+const mariadb = require('mariadb');
 
 const pool = mariadb.createPool({
   host: 'localhost',
@@ -8,9 +8,9 @@ const pool = mariadb.createPool({
   connectionLimit: 5
 });
 
-module.exports = pool;*/
+module.exports = pool;
 
-const mariadb = require('mariadb');
+/*const mariadb = require('mariadb');
 
 const pool = mariadb.createPool({
   host: process.env.DB_HOST || 'db',      // Ahora busca el servicio llamado 'db'
@@ -20,4 +20,4 @@ const pool = mariadb.createPool({
   connectionLimit: 5
 });
 
-module.exports = pool;
+module.exports = pool;*/
