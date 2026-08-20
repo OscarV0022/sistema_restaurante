@@ -42,18 +42,67 @@ export class TicketsComponent implements OnInit, OnDestroy {
     });
 
     this.socket.on('nueva_orden', (orden: any) => {
+      if (!orden.detalles || orden.detalles.length === 0) {
+        this.tickets = this.tickets.filter(t => t.mesa !== orden.mesa);
+        return;
+      }
+
       const index = this.tickets.findIndex(t => t.mesa === orden.mesa);
       if (index !== -1) {
-        this.tickets[index] = { ...orden, estado: 'pendientes', minimizado: false };
-      } else {
-        this.tickets.unshift({ ...orden, estado: 'pendientes', minimizado: false });
+        const ticketAnterior = this.tickets[index];
+        let itemsEliminadosOustin: any[] = [];
+
+        // 1. Detectar productos agregados o aumentados
+        orden.detalles = orden.detalles.map((itemNuevo: any) => {
+          const itemViejo = ticketAnterior.detalles.find((i: any) => i.descripcion === itemNuevo.descripcion);
+          const esNuevo = !itemViejo || itemNuevo.cantidad > itemViejo.cantidad;
+          return { ...itemNuevo, esNuevo };
+        });
+
+        // 2. Detectar qué se eliminó por completo o se redujo
+        ticketAnterior.detalles.forEach((itemViejo: any) => {
+          const itemNuevo = orden.detalles.find((i: any) => i.descripcion === itemViejo.descripcion);
+          if (!itemNuevo) {
+            // Se eliminó por completo
+            itemsEliminadosOustin.push({ cantidad: itemViejo.cantidad, descripcion: itemViejo.descripcion });
+          } else if (itemNuevo.cantidad < itemViejo.cantidad) {
+            // Se redujo la cantidad
+            const diferencia = itemViejo.cantidad - itemNuevo.cantidad;
+            itemsEliminadosOustin.push({ cantidad: diferencia, descripcion: itemViejo.descripcion });
+          }
+        });
+
+        this.tickets[index] = { 
+          ...orden, 
+          estado: 'pendientes', 
+          minimizado: false,
+          eliminados: itemsEliminadosOustin.length > 0 ? itemsEliminadosOustin : (ticketAnterior.eliminados || [])
+        };
+
         this.reproducirSonidoAlerta();
-        this.reproducirVozNatural(orden.mesa);
+
+        // Armar el mensaje de voz incluyendo los eliminados si los hay
+        let mensajeVoz = `Se ha actualizado el pedido de la ${orden.mesa}.`;
+        if (itemsEliminadosOustin.length > 0) {
+          const descEliminadas = itemsEliminadosOustin.map(e => `${e.cantidad} ${e.descripcion}`).join(', ');
+          mensajeVoz += ` Atención: se ha eliminado ${descEliminadas}.`;
+        }
+        this.reproducirVozPersonalizada(mensajeVoz);
+
+      } else {
+        orden.detalles = orden.detalles.map((i: any) => ({ ...i, esNuevo: true }));
+        this.tickets.unshift({ ...orden, estado: 'pendientes', minimizado: false, eliminados: [] });
+        this.reproducirSonidoAlerta();
+        this.reproducirVozPersonalizada(`Atención. Nuevo pedido para ${orden.mesa}.`);
       }
     });
 
     this.socket.on('remover_ticket', (nombreMesa: string) => {
-      this.tickets = this.tickets.filter(t => t.mesa !== nombreMesa);
+      const ticketExistente = this.tickets.find(t => t.mesa === nombreMesa);
+      if (ticketExistente) {
+        this.tickets = this.tickets.filter(t => t.mesa !== nombreMesa);
+        this.reproducirVozPersonalizada(`El pedido de la ${nombreMesa} ha sido cancelado o liberado.`);
+      }
     });
   }
 
@@ -73,7 +122,6 @@ export class TicketsComponent implements OnInit, OnDestroy {
     if (this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
     }
-    console.log("Audio habilitado. Listo para notificaciones.");
   }
 
   private reproducirSonidoAlerta() {
@@ -116,37 +164,33 @@ export class TicketsComponent implements OnInit, OnDestroy {
     }
   }
 
-  private reproducirVozNatural(nombreMesa: string) {
+  private reproducirVozPersonalizada(textoMensaje: string) {
     if (!this.audioHabilitado) return;
-    const texto = `Atención. Nuevo pedido para ${nombreMesa}.`;
-    const url = `${this.API_URL}/tts?text=${encodeURIComponent(texto)}`;
+    const url = `${this.API_URL}/tts?text=${encodeURIComponent(textoMensaje)}`;
 
     this.vozPlayer.pause();
     this.vozPlayer.src = url;
     this.vozPlayer.load();
-    this.vozPlayer.play().catch(err => console.error("Error reproduciendo MP3 de voz:", err));
+    this.vozPlayer.play().catch(err => console.error("Error reproduciendo voz:", err));
   }
 
-  // 🌟 NUEVO: Función para leer los detalles del ticket a petición 🌟
   leerPedidoManual(ticket: any) {
-    if (!this.audioHabilitado) this.activarAudio(); // Asegurarse de que el audio esté activo
+    if (!this.audioHabilitado) this.activarAudio();
 
     let texto = `Para la ${ticket.mesa} piden: `;
-    
     if (ticket.detalles && ticket.detalles.length > 0) {
-      // Extrae la cantidad y el nombre de cada producto, y los une con comas
       const articulos = ticket.detalles.map((item: any) => `${item.cantidad} ${item.descripcion}`).join(', ');
       texto += articulos + '.';
     } else {
       texto += 'No hay detalles en este pedido.';
     }
 
-    const url = `${this.API_URL}/tts?text=${encodeURIComponent(texto)}`;
+    if (ticket.eliminados && ticket.eliminados.length > 0) {
+      const eliminadosTexto = ticket.eliminados.map((e: any) => `${e.cantidad} ${e.descripcion}`).join(', ');
+      texto += ` Además se eliminó: ${eliminadosTexto}.`;
+    }
 
-    this.vozPlayer.pause();
-    this.vozPlayer.src = url;
-    this.vozPlayer.load();
-    this.vozPlayer.play().catch(err => console.error("Error reproduciendo lectura manual:", err));
+    this.reproducirVozPersonalizada(texto);
   }
 
   cambiarEstado(ticket: any, nuevoEstado: 'preparando' | 'completo') {

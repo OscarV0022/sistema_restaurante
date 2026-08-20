@@ -1,100 +1,192 @@
-<div class="contenedor-principal">
-  <div class="seccion-menu mat-elevation-z2">
-    <div class="header-menu-top">
-        <mat-form-field appearance="outline" class="buscador-full">
-            <mat-label>Buscar producto...</mat-label>
-            <mat-icon matPrefix>search</mat-icon>
-            <input matInput [(ngModel)]="busqueda" (ngModelChange)="filtrarPorBusqueda()" autocomplete="off">
-            <button mat-icon-button matSuffix *ngIf="busqueda" (click)="verCategorias()"><mat-icon>close</mat-icon></button>
-        </mat-form-field>
+<div class="chiantla-encargos-container">
+  
+  <!-- SECCIÓN IZQUIERDA: MENÚ Y EXPLORACIÓN -->
+  <div class="panel-exploracion">
+    
+    <!-- Barra de Búsqueda Moderna y Moderada -->
+    <div class="search-bar-moderna">
+      <mat-icon>search</mat-icon>
+      <input type="text" placeholder="Buscar platillo..." 
+             [(ngModel)]="busqueda" (ngModelChange)="filtrarPorBusqueda()" autocomplete="off">
+      <button class="btn-clear-search" *ngIf="busqueda" (click)="verCategorias()">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
 
-    <div *ngIf="!categoriaSeleccionada && !busqueda" class="grid-categorias">
-        <div class="tarjeta-categoria" *ngFor="let cat of categorias" (click)="seleccionarCategoria(cat)">
+    <!-- Vista de Categorías -->
+    <div *ngIf="!categoriaSeleccionada && !busqueda" class="seccion-grid-animada">
+      <div class="bienvenida-box">
+        <h2>Categorías del Menú</h2>
+        <p>Selecciona una opción para comenzar</p>
+      </div>
+      <div class="grid-categorias-moderno">
+        <div class="card-categoria-moderna" *ngFor="let cat of categorias" (click)="seleccionarCategoria(cat)">
+          <div class="cat-icon-wrapper">
             <mat-icon>restaurant_menu</mat-icon>
-            <h3 class="cat-texto">{{ cat }}</h3>
+          </div>
+          <span class="cat-name">{{ cat }}</span>
+          <mat-icon class="arrow-icon">chevron_right</mat-icon>
         </div>
+      </div>
     </div>
 
-    <div *ngIf="categoriaSeleccionada || busqueda" class="contenedor-productos">
-        <div class="header-categoria">
-            <button mat-stroked-button (click)="verCategorias()"><mat-icon>arrow_back</mat-icon> VOLVER</button>
-            <h2 class="titulo-seccion">{{ categoriaSeleccionada || 'Resultados' }}</h2>
+    <!-- Vista de Productos -->
+    <div *ngIf="categoriaSeleccionada || busqueda" class="seccion-productos-moderna">
+      <div class="nav-volver-wrapper">
+        <button class="btn-regresar-custom" (click)="verCategorias()">
+          <mat-icon>arrow_back_ios</mat-icon> Volver
+        </button>
+        <span class="categoria-activa-badge">{{ categoriaSeleccionada || 'Resultados' }}</span>
+      </div>
+
+      <div class="grid-productos-moderno">
+        <div class="card-producto-moderna" *ngFor="let item of productosVisibles" (click)="agregarAlCarrito(item)">
+          <div class="prod-info">
+            <h4 class="prod-titulo">{{ item.descripcion }}</h4>
+            <span class="prod-precio">Q{{ item.precio }}</span>
+          </div>
+          <div class="prod-action-btn">
+            <mat-icon>add</mat-icon>
+          </div>
         </div>
-        <div class="grid-productos">
-            <div class="tarjeta-producto" *ngFor="let item of productosVisibles" (click)="agregarAlCarrito(item)">
-                <div class="info">
-                    <span class="nombre">{{ item.descripcion }}</span>
-                    <span class="precio">Q{{ item.precio }}</span>
-                </div>
-                <mat-icon color="primary">add_shopping_cart</mat-icon>
-            </div>
-        </div>
+      </div>
     </div>
+
   </div>
 
-  <div class="seccion-formulario">
-    <mat-tab-group animationDuration="0ms" class="tab-contenedor" mat-stretch-tabs="false">
-        <mat-tab label="➕ NUEVO ENCARGO">
-            <div class="tab-wrapper">
-                <div class="form-section">
-                    <mat-form-field appearance="outline" class="campo-full"><mat-label>Nombre Cliente</mat-label><input matInput [(ngModel)]="cliente"></mat-form-field>
-                    <div class="fila-fechas">
-                        <mat-form-field appearance="outline"><mat-label>Fecha</mat-label><input matInput [matDatepicker]="p" [(ngModel)]="fechaEntrega"><mat-datepicker-toggle matIconSuffix [for]="p"></mat-datepicker-toggle><mat-datepicker #p></mat-datepicker></mat-form-field>
-                        <mat-form-field appearance="outline"><mat-label>Hora</mat-label><input matInput type="time" [(ngModel)]="horaEntrega"></mat-form-field>
-                    </div>
-                    <mat-form-field appearance="outline" class="campo-full">
-                        <mat-label>Estado del Pago</mat-label>
-                        <mat-select [(ngModel)]="estadoPago">
-                            <mat-option value="PENDIENTE">🔴 PENDIENTE</mat-option>
-                            <mat-option value="PAGADO">🟢 PAGADO</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-                
-                <div class="lista-pedido">
-                    <div class="item-fila" *ngFor="let item of carrito; let i = index">
-                        <div class="desc"><strong>{{item.descripcion}}</strong><br><small>{{item.cantidad}} x Q{{item.precio}}</small></div>
-                        <div class="sub">Q{{item.subtotal | number:'1.2-2'}}</div>
-                        <button mat-icon-button color="warn" (click)="eliminarDelCarrito(i)"><mat-icon>delete</mat-icon></button>
-                    </div>
+  <!-- SECCIÓN DERECHA: TICKET Y GESTIÓN -->
+  <div class="panel-gestion">
+    <mat-tab-group animationDuration="200ms" class="tabs-personalizadas">
+        
+        <!-- PESTAÑA 1: NUEVO ENCARGO -->
+        <mat-tab label="NUEVO ENCARGO">
+            <div class="tab-content-wrapper">
+              
+              <div class="cliente-form-card">
+                <div class="input-moderno-group">
+                  <label>Nombre del Cliente</label>
+                  <div class="input-con-icono">
+                    <mat-icon>person</mat-icon>
+                    <input type="text" [(ngModel)]="cliente" placeholder="Ej. Carlos Pérez" autocomplete="off">
+                  </div>
                 </div>
 
-                <div class="footer-encargo">
-                    <div class="total-encargo">Total: Q{{ total | number:'1.2-2' }}</div>
-                    <button mat-flat-button class="btn-guardar" [disabled]="!cliente || carrito.length==0" (click)="guardarEncargo()">GUARDAR ENCARGO</button>
+                <div class="fila-doble">
+                  <div class="input-moderno-group">
+                    <label>Fecha de Entrega</label>
+                    <div class="input-con-icono">
+                      <mat-icon>calendar_today</mat-icon>
+                      <input matInput [matDatepicker]="p" [(ngModel)]="fechaEntrega" placeholder="Fecha" readonly (click)="p.open()">
+                      <mat-datepicker #p></mat-datepicker>
+                    </div>
+                  </div>
+
+                  <div class="input-moderno-group">
+                    <label>Hora</label>
+                    <div class="input-con-icono">
+                      <mat-icon>schedule</mat-icon>
+                      <input type="time" [(ngModel)]="horaEntrega">
+                    </div>
+                  </div>
                 </div>
+
+                <div class="input-moderno-group">
+                  <label>Estado del Pago</label>
+                  <div class="selector-estado-pago">
+                    <button type="button" [class.activo]="estadoPago === 'PENDIENTE'" (click)="estadoPago = 'PENDIENTE'">
+                      <span class="dot rojo"></span> Pendiente
+                    </button>
+                    <button type="button" [class.activo]="estadoPago === 'PAGADO'" (click)="estadoPago = 'PAGADO'">
+                      <span class="dot verde"></span> Pagado
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Carrito -->
+              <div class="carrito-contenedor-moderno">
+                <div class="carrito-header">
+                  <span>Platillos seleccionados</span>
+                  <span class="badge-cantidad">{{ carrito.length }}</span>
+                </div>
+
+                <div class="carrito-items-list">
+                  <div class="carrito-vacio-placeholder" *ngIf="carrito.length === 0">
+                    <mat-icon>shopping_basket</mat-icon>
+                    <p>Aún no hay platillos en el encargo</p>
+                  </div>
+
+                  <div class="carrito-item-row" *ngFor="let item of carrito; let i = index">
+                    <div class="item-det">
+                      <span class="item-title">{{ item.descripcion }}</span>
+                      <span class="item-sub">{{ item.cantidad }} x Q{{ item.precio }}</span>
+                    </div>
+                    <span class="item-subtotal">Q{{ item.subtotal | number:'1.2-2' }}</span>
+                    <button class="btn-eliminar-item" (click)="eliminarDelCarrito(i)">
+                      <mat-icon>remove_circle_outline</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer Carrito -->
+              <div class="carrito-footer-moderno">
+                <div class="total-info-box">
+                  <span>Total a cobrar</span>
+                  <span class="total-monto">Q{{ total | number:'1.2-2' }}</span>
+                </div>
+                <button class="btn-accion-principal" [disabled]="!cliente || carrito.length==0" (click)="guardarEncargo()">
+                  <mat-icon>check_circle</mat-icon> Guardar Encargo
+                </button>
+              </div>
+
             </div>
         </mat-tab>
 
-        <mat-tab label="📋 HISTORIAL">
-            <div class="tab-wrapper scroll-y">
-                <div class="filtros-box">
-                    <mat-form-field appearance="outline"><input matInput [matDatepicker]="pf" [(ngModel)]="fechaFiltro" placeholder="Fecha"><mat-datepicker-toggle matIconSuffix [for]="pf"></mat-datepicker-toggle><mat-datepicker #pf></mat-datepicker></mat-form-field>
-                    <button mat-raised-button color="primary" (click)="buscarPorFecha()">BUSCAR</button>
-                    <button mat-stroked-button (click)="cargarHistorialEncargos()">PENDIENTES</button>
+        <!-- PESTAÑA 2: HISTORIAL -->
+        <mat-tab label="HISTORIAL">
+            <div class="tab-content-wrapper scrollable-tab">
+              
+              <div class="historial-filtros-bar">
+                <div class="input-con-icono input-filtro-fecha">
+                  <mat-icon>event</mat-icon>
+                  <input matInput [matDatepicker]="pf" [(ngModel)]="fechaFiltro" placeholder="Fecha" readonly (click)="pf.open()">
+                  <mat-datepicker #pf></mat-datepicker>
                 </div>
-                
-                <div class="lista-items-historial">
-                    <div class="tarjeta-encargo" *ngFor="let enc of listaEncargos" [class.pagado]="enc.estado_pago === 'PAGADO'">
-                        <div class="card-head">
-                            <div><div class="c-nombre">{{enc.cliente}}</div><div class="c-fecha">{{enc.fecha_entrega | date:'short'}}</div></div>
-                            <div class="c-badge" [ngClass]="enc.estado_pago">{{enc.estado_pago}}</div>
-                        </div>
-                        <div class="card-detalle">
-                            <div class="detalle-row" *ngFor="let d of enc.detalles">
-                                <span>• {{d.cantidad}} x {{d.descripcion}}</span>
-                                <span>Q{{d.subtotal | number:'1.2-2'}}</span>
-                            </div>
-                        </div>
-                        <div class="card-foot">
-                            <strong>TOTAL: Q{{enc.total | number:'1.2-2'}}</strong>
-                            <button mat-stroked-button color="primary" *ngIf="enc.estado_pago=='PENDIENTE'" (click)="cobrarEncargo(enc)">COBRAR</button>
-                        </div>
+                <button class="btn-secundario-filtro" (click)="buscarPorFecha()">Buscar</button>
+                <button class="btn-texto-filtro" (click)="cargarHistorialEncargos()">Pendientes</button>
+              </div>
+
+              <div class="historial-lista">
+                <div class="encargo-card-moderna" *ngFor="let enc of listaEncargos" [class.es-pagado]="enc.estado_pago === 'PAGADO'">
+                  <div class="encargo-card-header">
+                    <div>
+                      <h3 class="cliente-nombre-card">{{ enc.cliente }}</h3>
+                      <span class="fecha-entrega-card"><mat-icon>schedule</mat-icon> {{ enc.fecha_entrega | date:'short' }}</span>
                     </div>
+                    <span class="status-badge" [ngClass]="enc.estado_pago">{{ enc.estado_pago }}</span>
+                  </div>
+
+                  <div class="encargo-card-body">
+                    <div class="mini-row" *ngFor="let d of enc.detalles">
+                      <span>{{ d.cantidad }}x {{ d.descripcion }}</span>
+                      <span class="mini-sub">Q{{ d.subtotal | number:'1.2-2' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="encargo-card-footer">
+                    <span class="total-card-txt">Total: <strong>Q{{ enc.total | number:'1.2-2' }}</strong></span>
+                    <button class="btn-cobrar-card" *ngIf="enc.estado_pago=='PENDIENTE'" (click)="cobrarEncargo(enc)">
+                      <mat-icon>payments</mat-icon> Cobrar
+                    </button>
+                  </div>
                 </div>
+              </div>
+
             </div>
         </mat-tab>
+
     </mat-tab-group>
   </div>
+
 </div>

@@ -1,0 +1,148 @@
+<div class="contenedor-principal">
+  
+  <div class="cabecera">
+    <div>
+      <h2 class="titulo-seccion">Menú Chiantlequita</h2>
+      <p class="subtitulo">Administración de platillos y precios</p>
+    </div>
+    <button *ngIf="vistaActual !== 'menu'" class="btn-volver" (click)="cambiarVista('menu')">
+      <mat-icon>arrow_back</mat-icon> Volver al Menú
+    </button>
+  </div>
+
+  <!-- DASHBOARD CON IDENTIDAD DEL RESTAURANTE -->
+  <div class="dashboard-grid" *ngIf="vistaActual === 'menu'">
+    <div class="tarjeta-accion" (click)="cambiarVista('crear')">
+      <div class="icono-contenedor"><mat-icon>restaurant_menu</mat-icon></div>
+      <h3>Nuevo Platillo</h3>
+      <p>Agregar al sistema</p>
+    </div>
+    
+    <div class="tarjeta-accion" (click)="cambiarVista('editar')">
+      <div class="icono-contenedor"><mat-icon>edit_document</mat-icon></div>
+      <h3>Modificar Platillo</h3>
+      <p>Precios o categorías</p>
+    </div>
+    
+    <div class="tarjeta-accion" (click)="cambiarVista('eliminar')">
+      <div class="icono-contenedor"><mat-icon>delete_sweep</mat-icon></div>
+      <h3>Quitar Platillo</h3>
+      <p>Eliminar del sistema</p>
+    </div>
+  </div>
+
+  <!-- VISTA: CREAR PRODUCTO -->
+  <div class="formulario-vista fade-in" *ngIf="vistaActual === 'crear'">
+    <div class="vista-header">
+      <mat-icon class="color-marca">add_circle</mat-icon>
+      <h3>Agregar al Menú</h3>
+    </div>
+    <form (ngSubmit)="guardarNuevoProducto()" class="form-moderno">
+      <div class="form-group">
+        <label>Descripción del Platillo:</label>
+        <input type="text" name="descripcion" [(ngModel)]="producto.descripcion" placeholder="Ej. Pepián de Pollo..." required>
+      </div>
+      <div class="form-group">
+        <label>Precio (Q):</label>
+        <input type="number" name="precio" [(ngModel)]="producto.precio" placeholder="0.00" required>
+      </div>
+      <div class="form-group">
+        <label>Categoría:</label>
+        <select name="categoria" [(ngModel)]="producto.categoria" required>
+          <option value="" disabled selected>Selecciona una categoría</option>
+          <option value="DESAYUNOS">Desayunos</option>
+          <option value="PLATILLOS TÍPICOS">Platillos Típicos</option>
+          <option value="ASADOS TÍPICOS">Asados Típicos</option>
+          <option value="ESPECIALIDADES">Especialidades</option>
+          <option value="MARISCOS">Mariscos</option>
+          <option value="ANTOJITOS Y REFACCIONES">Antojitos y Refacciones</option>
+          <option value="BEBIDAS CALIENTES">Bebidas Calientes</option>
+          <option value="BEBIDAS FRIAS">Bebidas Frías</option>
+          <option value="SMOOTHIES">Smoothies</option>
+          <option value="LICORES">Licores</option>
+          <option value="EXTRAS">Extras</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-accion btn-primario">
+        <mat-icon>save</mat-icon> Guardar Platillo
+      </button>
+    </form>
+  </div>
+
+  <!-- VISTA: EDITAR PRODUCTO -->
+  <div class="formulario-vista fade-in" *ngIf="vistaActual === 'editar'">
+    <div class="vista-header">
+      <mat-icon class="color-marca">edit</mat-icon>
+      <h3>Buscar para Editar</h3>
+    </div>
+    
+    <div class="buscador-container">
+      <mat-icon class="icono-buscar">search</mat-icon>
+      <input type="text" class="buscador" placeholder="Escribe para buscar un platillo..." 
+             [(ngModel)]="terminoBusqueda" (input)="buscarProducto()">
+    </div>
+
+    <div class="lista-resultados" *ngIf="!producto.id">
+      <div class="item-resultado" *ngFor="let item of menuFiltrado" (click)="seleccionarParaEditar(item)">
+        <div class="item-info">
+          <span class="item-nombre">{{ item.descripcion }}</span>
+          <span class="item-categoria">{{ item.categoria }}</span>
+        </div>
+        <strong class="item-precio">Q{{ item.precio }}</strong>
+      </div>
+    </div>
+
+    <form *ngIf="producto.id" (ngSubmit)="actualizarProducto()" class="form-moderno form-edicion">
+      <div class="alerta-edicion">
+        <mat-icon>info</mat-icon> Editando: <strong>{{ producto.descripcion }}</strong>
+      </div>
+      <div class="form-group">
+        <label>Nueva Descripción:</label>
+        <input type="text" name="descripcion" [(ngModel)]="producto.descripcion" required>
+      </div>
+      <div class="form-group">
+        <label>Nuevo Precio (Q):</label>
+        <input type="number" name="precio" [(ngModel)]="producto.precio" required>
+      </div>
+      <div class="form-group">
+        <label>Categoría:</label>
+        <input type="text" name="categoria" [(ngModel)]="producto.categoria" required>
+      </div>
+      <div class="acciones-form">
+        <button type="submit" class="btn-accion btn-primario">
+          <mat-icon>update</mat-icon> Actualizar Platillo
+        </button>
+        <button type="button" class="btn-accion btn-cancelar" (click)="producto.id = null">
+          <mat-icon>close</mat-icon> Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- VISTA: ELIMINAR PRODUCTO -->
+  <div class="formulario-vista fade-in" *ngIf="vistaActual === 'eliminar'">
+    <div class="vista-header">
+      <mat-icon class="color-marca">delete_forever</mat-icon>
+      <h3>Buscar para Eliminar</h3>
+    </div>
+    
+    <div class="buscador-container">
+      <mat-icon class="icono-buscar">search</mat-icon>
+      <input type="text" class="buscador" placeholder="Escribe para buscar un platillo a eliminar..." 
+             [(ngModel)]="terminoBusqueda" (input)="buscarProducto()">
+    </div>
+
+    <div class="lista-resultados">
+      <div class="item-resultado item-peligro" *ngFor="let item of menuFiltrado">
+        <div class="item-info">
+          <span class="item-nombre">{{ item.descripcion }}</span>
+          <strong class="item-precio">Q{{ item.precio }}</strong>
+        </div>
+        <button class="btn-basurero" (click)="confirmarEliminacion(item.id)">
+          <mat-icon>delete</mat-icon> Borrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

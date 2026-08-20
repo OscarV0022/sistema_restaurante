@@ -98,7 +98,6 @@
 /* --- GRID DE TICKETS (Obliga a hacer cuadritos) --- */
 .kds-grid {
   display: grid;
-  /* Esto crea las columnas. Si la pantalla es ancha, pone 4 o 5. Si es chica, 1 o 2. */
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
   align-items: start;
@@ -162,7 +161,6 @@
 /* --- CUERPO DEL TICKET --- */
 .ticket-body {
   padding: 16px;
-  /* Si el ticket es muy largo, le pone scroll solo a ese ticket */
   max-height: 400px; 
   overflow-y: auto;
 }
@@ -195,13 +193,14 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
   border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.3s ease;
 }
 
 .lista-productos li:last-child {
   border-bottom: none;
-  padding-bottom: 0;
 }
 
 /* La cajita de la cantidad (Gigante para que se lea fácil) */
@@ -258,3 +257,39 @@
   background-color: #22c55e; /* Verde */
 }
 .btn-completar:hover { background-color: #16a34a; }
+
+/* 🌟 ANIMACIÓN DE PARPARDEO NARANJA PÁLIDO PARA PRODUCTOS NUEVOS/ACTUALIZADOS 🌟 */
+@keyframes parpadeoNaranjaSuave {
+  0% { background-color: rgba(251, 191, 36, 0.7); }
+  50% { background-color: rgba(254, 243, 199, 0.3); }
+  100% { background-color: rgba(251, 191, 36, 0.7); }
+}
+
+.producto-nuevo-parpadeo {
+  animation: parpadeoNaranjaSuave 1.2s ease-in-out infinite;
+  border-left: 5px solid #f59e0b;
+}
+
+.aviso-eliminados {
+  margin-top: 16px;
+  background-color: #fef2f2;
+  border: 1px dashed #ef4444;
+  border-radius: 8px;
+  padding: 10px;
+  color: #991b1b;
+}
+
+.titulo-eliminados {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
+
+.aviso-eliminados ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.9rem;
+}

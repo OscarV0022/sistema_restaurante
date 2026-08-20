@@ -7,12 +7,10 @@
     </div>
     
     <div class="controles-superiores">
-      <!-- Botón de activar audio (Llama la atención si está apagado) -->
       <button mat-flat-button color="warn" class="btn-activar-audio" (click)="activarAudio()" *ngIf="!audioHabilitado">
         <mat-icon>volume_up</mat-icon> <span>Activar Sonido</span>
       </button>
       
-      <!-- Indicador verde cuando el audio ya sirve -->
       <div class="audio-activo" *ngIf="audioHabilitado">
         <mat-icon>hearing</mat-icon> <span>Audio Listo</span>
       </div>
@@ -52,11 +50,9 @@
           </div>
           
           <div class="controles-ticket">
-            <!-- Botón de voz para la abuela -->
             <button mat-mini-fab class="btn-leer-abuela" (click)="leerPedidoManual(ticket)" matTooltip="Leer en voz alta">
               <mat-icon>volume_up</mat-icon>
             </button>
-            <!-- Botón de minimizar -->
             <button mat-icon-button class="btn-minimizar" (click)="toggleMinimizar(ticket)">
               <mat-icon>{{ ticket.minimizado ? 'expand_more' : 'expand_less' }}</mat-icon>
             </button>
@@ -70,15 +66,26 @@
           </div>
 
           <ul class="lista-productos">
-            <li *ngFor="let item of ticket.detalles">
-              <!-- Cantidad gigante para fácil lectura -->
+            <li *ngFor="let item of ticket.detalles" [class.producto-nuevo-parpadeo]="item.esNuevo">
               <div class="cantidad-caja">{{ item.cantidad }}</div>
               <div class="descripcion-texto">{{ item.descripcion }}</div>
             </li>
           </ul>
+
+          <!-- 🌟 AVISO VISUAL DE PRODUCTOS ELIMINADOS (AHORA SÍ APARECERÁ AQUÍ) 🌟 -->
+          <div class="aviso-eliminados" *ngIf="ticket.eliminados && ticket.eliminados.length > 0">
+            <div class="titulo-eliminados">
+              <mat-icon>warning</mat-icon> <span>Eliminado de la orden:</span>
+            </div>
+            <ul>
+              <li *ngFor="let eliminado of ticket.eliminados">
+                <strong>- {{ eliminado.cantidad }}x</strong> {{ eliminado.descripcion }}
+              </li>
+            </ul>
+          </div>
         </div>
 
-        <!-- ACCIONES DEL TICKET (Oculto si está minimizado) -->
+        <!-- ACCIONES DEL TICKET -->
         <div class="ticket-footer" *ngIf="!ticket.minimizado">
           <button class="btn-accion btn-preparar" 
                   *ngIf="ticket.estado === 'pendientes'" 
@@ -93,8 +100,8 @@
           </button>
         </div>
 
-      </div> <!-- Fin de ticket-card -->
-    </div> <!-- Fin de kds-grid -->
+      </div> 
+    </div> 
 
   </main>
 </div>

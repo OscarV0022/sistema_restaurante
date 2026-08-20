@@ -1,169 +1,329 @@
-/* Layout Principal - Flexbox Seguro */
-* { box-sizing: border-box; }
-
-.contenedor-principal {
+/* --- LAYOUT GENERAL (PEGADO AL HEADER SIN ESPACIOS) --- */
+.chiantla-encargos-container {
     display: flex;
-    height: 100vh;
-    background-color: #f4f6f8;
+    height: calc(100vh - 70px);
+    width: 100vw;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    background-color: #f8fafc;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
     overflow: hidden;
-    font-family: 'Roboto', sans-serif;
+    box-sizing: border-box;
+    border-top: none;
 }
 
-/* --- SECCIÓN MENÚ (IZQUIERDA) --- */
-.seccion-menu {
-    flex: 2;
-    background: #ffffff;
-    border-right: 1px solid #e0e0e0;
+/* --- PANEL IZQUIERDO: EXPLORACIÓN --- */
+.panel-exploracion {
+    flex: 1.3;
+    background-color: #ffffff;
+    border-right: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
+    padding: 18px;
     overflow: hidden;
-    min-width: 300px;
 }
 
-.header-menu-top { padding: 20px; background: #fff; border-bottom: 1px solid #eee; flex-shrink: 0; }
-.buscador-full { width: 100%; }
-
-/* Categorías en lista vertical (para que no se corten los nombres) */
-.grid-categorias {
+/* Buscador Moderado */
+.search-bar-moderna {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 20px;
-    overflow-y: auto;
-}
-
-.tarjeta-categoria {
-    background: #f8f9fa;
-    border: 1px solid #e0e0e0;
+    align-items: center;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
     border-radius: 8px;
-    padding: 15px;
-    cursor: pointer;
-    transition: 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 15px;
+    padding: 0 12px;
+    height: 42px;
+    margin-bottom: 16px;
+    transition: all 0.2s;
 }
-.tarjeta-categoria:hover { border-color: #3f51b5; background: #f1f4ff; }
-.tarjeta-categoria h3 { margin: 0; font-size: 1rem; }
+.search-bar-moderna:focus-within {
+    border-color: #EA580C;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.1);
+}
+.search-bar-moderna mat-icon { color: #64748b; margin-right: 10px; font-size: 20px; }
+.search-bar-moderna input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #1e293b;
+    font-size: 14px;
+    outline: none;
+}
+.search-bar-moderna input::placeholder { color: #94a3b8; }
+.btn-clear-search { background: none; border: none; color: #64748b; cursor: pointer; display: flex; align-items: center; }
 
-.contenedor-productos { padding: 20px; overflow-y: auto; flex: 1; }
-.header-categoria { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+/* Grid de Categorías Moderado */
+.seccion-grid-animada { flex: 1; overflow-y: auto; padding-right: 4px; }
+.bienvenida-box h2 { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0 0 2px 0; }
+.bienvenida-box p { color: #64748b; font-size: 0.85rem; margin: 0 0 14px 0; }
 
-.grid-productos {
+.grid-categorias-moderno {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
 }
 
-.tarjeta-producto {
-    padding: 15px;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
+.card-categoria-moderna {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
     cursor: pointer;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    background: white;
-    transition: 0.2s;
-    min-width: 0; /* IMPEDIR QUE SE DEFORME */
+    gap: 12px;
+    transition: all 0.2s ease;
 }
-.tarjeta-producto:hover { border-color: #3f51b5; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-.info { min-width: 0; overflow: hidden; }
-.info .nombre { 
-    font-weight: 600; color: #333; display: block; 
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* PUNTOS SUSPENSIVOS */
+.card-categoria-moderna:hover {
+    background-color: #fff7ed;
+    border-color: #EA580C;
 }
-.info .precio { font-weight: 800; color: #2e7d32; font-size: 1.1rem; }
+.cat-icon-wrapper {
+    width: 36px; height: 36px; border-radius: 8px;
+    background-color: rgba(234, 88, 12, 0.1); color: #EA580C;
+    display: flex; align-items: center; justify-content: center;
+}
+.cat-icon-wrapper mat-icon { font-size: 20px; width: 20px; height: 20px; }
+.cat-name { flex: 1; font-weight: 600; font-size: 0.9rem; color: #334155; }
+.arrow-icon { color: #94a3b8; font-size: 18px; width: 18px; height: 18px; transition: transform 0.2s; }
+.card-categoria-moderna:hover .arrow-icon { color: #EA580C; transform: translateX(3px); }
 
-/* --- SECCIÓN FORMULARIO (DERECHA - TICKET ESTIRABLE) --- */
-.seccion-formulario {
-    flex: 1.5;
-    background: #fff;
+/* Productos de Categoría */
+.seccion-productos-moderna { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.nav-volver-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.btn-regresar-custom {
+    background: #f1f5f9; border: none; color: #475569; font-weight: 600; font-size: 0.85rem;
+    cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 6px;
+    transition: background 0.2s;
+}
+.btn-regresar-custom:hover { background-color: #e2e8f0; color: #0f172a; }
+.categoria-activa-badge {
+    background-color: rgba(234, 88, 12, 0.1); color: #EA580C; padding: 4px 10px;
+    border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+}
+
+/* --- TARJETAS DE PRODUCTOS COMPACTAS Y MULTILÍNEA --- */
+.grid-productos-moderno {
+    flex: 1; 
+    overflow-y: auto; 
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px; 
+    padding-right: 4px;
+    align-content: start;
+}
+
+.card-producto-moderna {
+    background-color: #ffffff; 
+    border: 1px solid #e2e8f0; 
+    border-radius: 8px;
+    padding: 12px; 
+    cursor: pointer; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    min-height: 75px;
+    transition: all 0.2s;
+}
+.card-producto-moderna:hover { 
+    border-color: #EA580C; 
+    background-color: #fff7ed; 
+}
+
+.prod-info { 
+    flex: 1; 
+    min-width: 0; 
+    padding-right: 8px; 
+}
+
+.prod-titulo { 
+    font-weight: 600; 
+    font-size: 0.85rem; 
+    color: #1e293b; 
+    margin: 0 0 4px 0; 
+    white-space: normal; 
+    word-break: break-word; 
+    line-height: 1.2; 
+}
+
+.prod-precio { 
+    font-weight: 700; 
+    color: #EA580C; 
+    font-size: 0.9rem; 
+}
+
+.prod-action-btn {
+    width: 28px; 
+    height: 28px; 
+    border-radius: 50%; 
+    background-color: #EA580C; 
+    color: #fff;
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    flex-shrink: 0; 
+    transition: transform 0.2s;
+}
+.prod-action-btn mat-icon { 
+    font-size: 16px; 
+    width: 16px; 
+    height: 16px; 
+}
+.card-producto-moderna:hover .prod-action-btn { 
+    transform: scale(1.1); 
+}
+
+/* --- PANEL DERECHO: GESTIÓN Y TICKET --- */
+.panel-gestion {
+    flex: 1.1;
+    background-color: #ffffff;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-left: 1px solid #e0e0e0;
-    min-width: 350px;
 }
 
-.tab-contenedor { height: 100%; display: flex; flex-direction: column; }
-.tab-wrapper { display: flex; flex-direction: column; flex: 1; overflow: hidden; padding: 20px; }
+/* Pestañas Material */
+.tabs-personalizadas { height: 100%; display: flex; flex-direction: column; }
+.tabs-personalizadas ::ng-deep .mat-mdc-tab-header { background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; min-height: 48px; }
+.tabs-personalizadas ::ng-deep .mat-mdc-tab { color: #64748b; font-weight: 600; font-size: 0.9rem; }
+.tabs-personalizadas ::ng-deep .mat-mdc-tab.mdc-tab--active { color: #EA580C; }
+.tabs-personalizadas ::ng-deep .mdc-tab-indicator__content--underline { border-color: #EA580C !important; border-width: 2px !important; }
 
-/* Lista de pedidos (se estira para llenar el espacio sobrante) */
-.lista-pedido { 
-    flex: 1;            /* ESTO HACE QUE SE ESTIRE */
-    overflow-y: auto; 
-    margin: 15px 0; 
-    border: 1px solid #eee; 
-    border-radius: 8px; 
-    padding: 10px; 
+.tab-content-wrapper {
+    display: flex; flex-direction: column; height: 100%; padding: 16px; box-sizing: border-box; overflow: hidden;
 }
+.scrollable-tab { overflow-y: auto; }
 
-.item-fila { display: flex; align-items: center; gap: 15px; padding: 12px 0; border-bottom: 1px solid #f0f0f0; min-width: 0; }
-.desc { flex: 1; min-width: 0; overflow: hidden; }
-.desc strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.footer-encargo { padding-top: 15px; border-top: 2px solid #eee; text-align: center; flex-shrink: 0; }
-.total-encargo { font-size: 2rem; font-weight: 900; color: #1565c0; margin-bottom: 10px; }
-.btn-guardar { width: 100%; height: 50px; font-weight: bold; }
-
-/* --- HISTORIAL --- */
-.scroll-y { overflow-y: auto; }
-.lista-scroll-encargos { padding: 20px; height: 100%; }
-.filtros-box { display: flex; gap: 10px; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px; flex-shrink: 0; }
-
-.tarjeta-encargo { 
-    margin-bottom: 20px;
-    border-radius: 12px;
-    border: 1px solid #e0e0e0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    overflow: hidden;
+/* Formulario Cliente Moderado */
+.cliente-form-card {
+    background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px;
 }
-.tarjeta-encargo.pagado { border-left: 6px solid #4caf50; }
-.tarjeta-encargo:not(.pagado) { border-left: 6px solid #f44336; }
+.input-moderno-group { margin-bottom: 8px; }
+.input-moderno-group:last-child { margin-bottom: 0; }
+.input-moderno-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
 
-.card-head { padding: 15px; background: #fcfcfc; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; }
-.c-nombre { 
-    font-weight: 800; font-size: 1.1rem; color: #222; 
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.input-con-icono {
+    display: flex; align-items: center; background-color: #ffffff; border: 1px solid #cbd5e1;
+    border-radius: 6px; padding: 0 10px; height: 38px; transition: border-color 0.2s;
 }
-.c-fecha { font-size: 0.85rem; color: #777; }
-.c-badge { font-weight: bold; font-size: 0.7rem; padding: 4px 10px; border-radius: 20px; background: #eee; flex-shrink: 0; }
-.c-badge.PAGADO { background: #e8f5e9; color: #2e7d32; }
+.input-con-icono:focus-within { border-color: #EA580C; box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.1); }
+.input-con-icono mat-icon { color: #64748b; font-size: 18px; width: 18px; height: 18px; margin-right: 8px; }
+.input-con-icono input { flex: 1; background: transparent; border: none; color: #1e293b; font-size: 13px; outline: none; }
 
-.card-detalle { padding: 15px; background: #fff; }
-.detalle-row { display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 5px; }
+.fila-doble { display: flex; gap: 10px; }
+.fila-doble .input-moderno-group { flex: 1; }
 
-.card-foot { padding: 15px; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+/* Selector Pago */
+.selector-estado-pago { display: flex; gap: 8px; }
+.selector-estado-pago button {
+    flex: 1; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px;
+    padding: 8px; color: #64748b; font-weight: 600; font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;
+}
+.selector-estado-pago button.activo { background-color: #fff7ed; border-color: #EA580C; color: #EA580C; }
+.dot { width: 7px; height: 7px; border-radius: 50%; }
+.dot.rojo { background-color: #ef4444; }
+.dot.verde { background-color: #10b981; }
 
-/* --- RESPONSIVE: MÓVIL Y TABLETS --- */
-@media (max-width: 768px) {
-    .contenedor-principal {
-        flex-direction: column; /* Apila el menú y el formulario */
-        height: auto; /* Permite que la página crezca con el scroll */
-        overflow-y: auto;
+/* Carrito Moderado */
+.carrito-contenedor-moderno {
+    flex: 1; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+    display: flex; flex-direction: column; overflow: hidden; margin-bottom: 12px;
+}
+.carrito-header {
+    padding: 10px 14px; background-color: #f1f5f9; border-bottom: 1px solid #e2e8f0;
+    display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;
+}
+.badge-cantidad { background-color: #EA580C; color: #fff; padding: 1px 6px; border-radius: 10px; font-size: 0.7rem; }
+
+.carrito-items-list { flex: 1; overflow-y: auto; padding: 6px 14px; }
+.carrito-vacio-placeholder {
+    height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; gap: 6px;
+}
+.carrito-vacio-placeholder mat-icon { font-size: 32px; width: 32px; height: 32px; }
+.carrito-vacio-placeholder p { margin: 0; font-size: 0.85rem; }
+
+.carrito-item-row {
+    display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;
+}
+.carrito-item-row:last-child { border-bottom: none; }
+.item-det { flex: 1; padding-right: 8px; min-width: 0; }
+.item-title { display: block; font-weight: 600; font-size: 0.85rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-sub { font-size: 0.75rem; color: #64748b; }
+.item-subtotal { font-weight: 700; font-size: 0.9rem; color: #EA580C; margin-right: 8px; }
+.btn-eliminar-item { background: none; border: none; color: #ef4444; cursor: pointer; display: flex; align-items: center; padding: 0; }
+.btn-eliminar-item mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+/* Footer Carrito */
+.carrito-footer-moderno {
+    background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px;
+}
+.total-info-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.total-info-box span:first-child { color: #64748b; font-size: 0.85rem; font-weight: 600; }
+.total-monto { font-size: 1.4rem; font-weight: 800; color: #0f172a; }
+
+.btn-accion-principal {
+    width: 100%; height: 44px; background-color: #EA580C; color: #fff; border: none;
+    border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;
+}
+.btn-accion-principal:hover:not(:disabled) { background-color: #c2410c; }
+.btn-accion-principal:disabled { background-color: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+
+/* --- HISTORIAL DE ENCARGOS --- */
+.historial-filtros-bar { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+.input-filtro-fecha { flex: 1; height: 38px; }
+.btn-secundario-filtro {
+    background-color: #EA580C; color: #fff; border: none; border-radius: 6px; padding: 0 14px; height: 38px; font-weight: 600; font-size: 0.85rem; cursor: pointer;
+}
+.btn-texto-filtro {
+    background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; border-radius: 6px; padding: 0 12px; height: 38px; font-weight: 600; font-size: 0.85rem; cursor: pointer;
+}
+.btn-texto-filtro:hover { background-color: #e2e8f0; color: #0f172a; }
+
+.historial-lista { display: flex; flex-direction: column; gap: 10px; padding-bottom: 15px; }
+
+.encargo-card-moderna {
+    background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;
+}
+.encargo-card-moderna.es-pagado { border-left: 4px solid #10b981; }
+.encargo-card-moderna:not(.es-pagado) { border-left: 4px solid #ef4444; }
+
+.encargo-card-header { padding: 10px 14px; background-color: #f8fafc; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
+.cliente-nombre-card { font-size: 0.95rem; font-weight: 700; color: #0f172a; margin: 0 0 2px 0; }
+.fecha-entrega-card { font-size: 0.75rem; color: #64748b; display: flex; align-items: center; gap: 4px; }
+.fecha-entrega-card mat-icon { font-size: 13px; width: 13px; height: 13px; }
+
+.status-badge { font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 10px; }
+.status-badge.PAGADO { background-color: #ecfdf5; color: #059669; }
+.status-badge.PENDIENTE { background-color: #fef2f2; color: #dc2626; }
+
+.encargo-card-body { padding: 10px 14px; font-size: 0.85rem; color: #334155; }
+.mini-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.mini-sub { font-weight: 600; color: #0f172a; }
+
+.encargo-card-footer { padding: 10px 14px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+.total-card-txt { font-size: 0.85rem; color: #64748b; }
+.total-card-txt strong { color: #EA580C; font-size: 0.95rem; }
+
+.btn-cobrar-card {
+    background-color: #fff7ed; color: #EA580C; border: 1px solid #fed7aa; border-radius: 6px;
+    padding: 4px 10px; font-weight: 600; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s;
+}
+.btn-cobrar-card:hover { background-color: #EA580C; color: #fff; }
+.btn-cobrar-card mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
+/* --- RESPONSIVO MÓVILES --- */
+@media (max-width: 900px) {
+    .chiantla-encargos-container {
+        flex-direction: column; height: auto; overflow-y: auto; margin-top: 70px; position: relative; top: 0;
     }
-
-    .seccion-menu, .seccion-formulario {
-        width: 100%;
-        min-width: 100%;
-        height: auto;
-        border-right: none;
-        border-bottom: 1px solid #e0e0e0;
+    .panel-exploracion, .panel-gestion {
+        width: 100%; height: auto; min-width: 100%; border-right: none;
     }
-
-    .grid-categorias {
-        grid-template-columns: repeat(3, 1fr); /* 3 columnas en móvil */
-        gap: 10px;
-    }
-
-    .grid-productos {
-        grid-template-columns: repeat(2, 1fr); /* 2 columnas en móvil */
-    }
-
-    .tab-contenedor { height: auto; min-height: 400px; }
-    
-    /* Botones más grandes para dedos */
-    .btn-guardar { height: 60px; font-size: 1.1rem; }
-    .tarjeta-producto { min-height: 80px; }
+    .panel-gestion { border-top: 1px solid #e2e8f0; }
+    .tab-content-wrapper { height: auto; min-height: 500px; overflow-y: visible; }
+    .grid-categorias-moderno { grid-template-columns: repeat(1, 1fr); }
 }

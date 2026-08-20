@@ -27,6 +27,7 @@ interface Mesa {
   total: number;
   atendidoPor?: string;
   estadoCocina?: 'pendientes' | 'preparando' | 'completo';
+  ordenEnviada?: boolean; // 🌟 Bandera para controlar si ya se dio clic en Ordenar 🌟
 }
 
 @Component({
@@ -78,7 +79,6 @@ export class Pos implements OnInit, OnDestroy {
 
   private socket!: Socket;
   
-  // --- VARIABLES DE AUDIO PARA EL POS ---
   private API_URL = `http://${window.location.hostname}:3000/api`;
   private audioCtx: AudioContext | null = null;
   audioHabilitado: boolean = false;
@@ -92,9 +92,20 @@ export class Pos implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.cargarMenu();
+    
+    const datosCargados = this.cargarEstadoGuardado();
+    const tieneParaLlevar = this.todasLasMesas.some(m => m.seccion === 'PARA LLEVAR');
+
+    if (datosCargados && !tieneParaLlevar) {
+        this.todasLasMesas = [];
+        this.secciones = [];
+        this.inicializarMesas();
+    } else if (!datosCargados) {
+        this.inicializarMesas();
+    }
+
     this.inicializarSocket();
 
-    // 🌟 TRUCO: Desbloquear el audio en el primer clic del mesero 🌟
     document.addEventListener('click', () => {
       if (!this.audioHabilitado) {
         this.activarAudioSilencioso();
@@ -111,7 +122,6 @@ export class Pos implements OnInit, OnDestroy {
     }
   }
 
-  // --- MÉTODOS DE AUDIO ---
   activarAudioSilencioso() {
     this.audioHabilitado = true;
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -119,7 +129,6 @@ export class Pos implements OnInit, OnDestroy {
     if (this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
     }
-    console.log("Audio del POS desbloqueado con el primer clic.");
   }
 
   private reproducirTono(tipo: 'preparando' | 'completo') {
@@ -131,7 +140,6 @@ export class Pos implements OnInit, OnDestroy {
       const gain = this.audioCtx.createGain();
       
       osc.type = 'sine';
-      // Tono diferente: más grave para "preparando", agudo para "completo"
       osc.frequency.setValueAtTime(tipo === 'completo' ? 880 : 440, this.audioCtx.currentTime);
       
       gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
@@ -156,7 +164,7 @@ export class Pos implements OnInit, OnDestroy {
     } else if (estado === 'completo') {
       texto = `Atención. El pedido de la ${nombreMesa} ya está listo.`;
     } else {
-      return; // No anunciar si el estado es 'pendientes'
+      return;
     }
     
     const url = `${this.API_URL}/tts?text=${encodeURIComponent(texto)}`;
@@ -166,7 +174,6 @@ export class Pos implements OnInit, OnDestroy {
     this.vozPlayer.load();
     this.vozPlayer.play().catch(err => console.error("Error reproduciendo voz:", err));
   }
-  // -------------------------
 
   private obtenerNombreUsuario(): string {
     try {
@@ -192,37 +199,33 @@ export class Pos implements OnInit, OnDestroy {
   inicializarSocket() {
     this.socket = io(`http://${window.location.hostname}:3000`);
 
-    const datosCargados = this.cargarEstadoGuardado();
-    const tieneParaLlevar = this.todasLasMesas.some(m => m.seccion === 'PARA LLEVAR');
-
-    if (datosCargados && !tieneParaLlevar) {
-        this.todasLasMesas = [];
-        this.secciones = [];
-        this.inicializarMesas();
-    } else if (!datosCargados) {
-        this.inicializarMesas();
-    }
+    this.socket.on('connect', () => {
+      this.socket.emit('solicitar_mesas');
+    });
 
     this.socket.on('sincronizar_mesas', (mesasRemotas: Mesa[]) => {
-      this.todasLasMesas = mesasRemotas;
-      localStorage.setItem('restaurante_mesas', JSON.stringify(this.todasLasMesas));
-      
-      if (this.mesaSeleccionada) {
-        const actualizada = this.todasLasMesas.find(m => m.id === this.mesaSeleccionada!.id);
-        if (actualizada) {
-          this.mesaSeleccionada = actualizada;
+      if (mesasRemotas && mesasRemotas.length > 0) {
+        this.todasLasMesas = mesasRemotas;
+        localStorage.setItem('restaurante_mesas', JSON.stringify(this.todasLasMesas));
+        
+        const seccionesSet = new Set(this.todasLasMesas.map(m => m.seccion));
+        this.secciones = this.configuracionSecciones.map(c => c.nombre).filter(n => seccionesSet.has(n));
+
+        if (this.mesaSeleccionada) {
+          const actualizada = this.todasLasMesas.find(m => m.id === this.mesaSeleccionada!.id);
+          if (actualizada) {
+            this.mesaSeleccionada = actualizada;
+          }
         }
       }
     });
 
-    // 🌟 ESCUCHAR A LA COCINA Y AVISAR POR VOZ AL MESERO 🌟
     this.socket.on('estado_cocina_cambiado', (data: { mesa: string, estado: 'pendientes' | 'preparando' | 'completo' }) => {
       const mesaEncontrada = this.todasLasMesas.find(m => m.nombre === data.mesa);
       if (mesaEncontrada) {
         mesaEncontrada.estadoCocina = data.estado;
         this.guardarEstado();
 
-        // Disparar audios si la cocina cambió el estado a preparando o completo
         if (data.estado === 'preparando' || data.estado === 'completo') {
             this.reproducirTono(data.estado);
             this.anunciarEstadoMesa(data.mesa, data.estado);
@@ -283,7 +286,9 @@ export class Pos implements OnInit, OnDestroy {
   inicializarMesas() {
     let contadorId = 1;
     this.configuracionSecciones.forEach(config => {
-      this.secciones.push(config.nombre);
+      if (!this.secciones.includes(config.nombre)) {
+        this.secciones.push(config.nombre);
+      }
       for (let i = 1; i <= config.mesas; i++) {
         const prefijo = config.nombre === 'PARA LLEVAR' ? 'Orden' : 'Mesa';
         this.todasLasMesas.push({
@@ -294,7 +299,8 @@ export class Pos implements OnInit, OnDestroy {
           visible: true,
           mesasHijas: [],
           carrito: [],
-          total: 0
+          total: 0,
+          ordenEnviada: false
         });
       }
     });
@@ -314,6 +320,7 @@ export class Pos implements OnInit, OnDestroy {
     if (mesa.estado === 'libre') {
       mesa.estado = 'en-espera';
       mesa.atendidoPor = this.obtenerNombreUsuario();
+      mesa.ordenEnviada = false;
       this.guardarEstado();
     }
 
@@ -331,7 +338,13 @@ export class Pos implements OnInit, OnDestroy {
             this.mesaSeleccionada.estado = 'libre';
             this.mesaSeleccionada.atendidoPor = undefined;
             this.mesaSeleccionada.estadoCocina = undefined;
+            this.mesaSeleccionada.ordenEnviada = false;
             this.desagruparMesaActual();
+            
+            if (this.socket) {
+              this.socket.emit('limpiar_ticket', this.mesaSeleccionada.nombre);
+            }
+            
             this.guardarEstado();
           } else {
             return; 
@@ -339,6 +352,7 @@ export class Pos implements OnInit, OnDestroy {
         } else {
           this.mesaSeleccionada.estado = 'ocupada';
           this.mesaSeleccionada.estadoCocina = 'pendientes';
+          this.mesaSeleccionada.ordenEnviada = true; // 🌟 Marcamos que la orden ya fue enviada (cambiará a Actualizar) 🌟
           
           if (this.socket) {
             const ticketCocina = {
@@ -367,6 +381,7 @@ export class Pos implements OnInit, OnDestroy {
     if (this.mesaSeleccionada.estado === 'libre') {
         this.mesaSeleccionada.estado = 'en-espera';
         this.mesaSeleccionada.atendidoPor = this.obtenerNombreUsuario();
+        this.mesaSeleccionada.ordenEnviada = false;
         this.snackBar.open('Marcada como EN ESPERA', 'OK', { duration: 2000 });
     } else if (this.mesaSeleccionada.estado === 'en-espera') {
         this.mesaSeleccionada.estado = 'ocupada';
@@ -378,7 +393,13 @@ export class Pos implements OnInit, OnDestroy {
             this.mesaSeleccionada.total = 0;
             this.mesaSeleccionada.atendidoPor = undefined;
             this.mesaSeleccionada.estadoCocina = undefined;
+            this.mesaSeleccionada.ordenEnviada = false;
             this.desagruparMesaActual();
+            
+            if (this.socket) {
+              this.socket.emit('limpiar_ticket', this.mesaSeleccionada.nombre);
+            }
+
             this.snackBar.open('Mesa LIBERADA', 'OK', { duration: 2000 });
         }
     }
@@ -421,6 +442,7 @@ export class Pos implements OnInit, OnDestroy {
     origen.estado = 'libre'; 
     origen.atendidoPor = undefined;
     origen.estadoCocina = undefined;
+    origen.ordenEnviada = false;
 
     this.calcularTotalMesaEspecifica(destino);
     if (destino.carrito.length > 0) destino.estado = 'ocupada';
@@ -443,6 +465,7 @@ export class Pos implements OnInit, OnDestroy {
         mesaHija.estado = 'libre';
         mesaHija.atendidoPor = undefined;
         mesaHija.estadoCocina = undefined;
+        mesaHija.ordenEnviada = false;
         mesaHija.mesasHijas = [];
       }
     });
@@ -566,6 +589,7 @@ export class Pos implements OnInit, OnDestroy {
         this.mesaSeleccionada!.estado = 'libre';
         this.mesaSeleccionada!.atendidoPor = undefined;
         this.mesaSeleccionada!.estadoCocina = undefined;
+        this.mesaSeleccionada!.ordenEnviada = false;
         this.mesaSeleccionada = null; 
         this.montoRecibido = null;
         this.mostrandoPantallaPago = false;
