@@ -1,23 +1,19 @@
-const mariadb = require('mariadb');
+require('dotenv').config(); 
+const { Pool } = require('pg');
 
-const pool = mariadb.createPool({
-  host: 'localhost',
-  user: 'oscar',      
-  password: '13112016',      
-  database: 'restaurante_provisional',
-  connectionLimit: 5
+console.log("Intentando conectar a:", process.env.DATABASE_URL ? "URL encontrada" : "URL UNDEFINED ❌");
+
+const connectionString = process.env.DATABASE_URL;
+
+const pool = new Pool({
+  connectionString: connectionString,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
+
+pool.connect()
+  .then(() => console.log('✅ Base de datos conectada a Supabase en la nube'))
+  .catch(err => console.error('❌ Error conectando a Supabase:', err.message));
 
 module.exports = pool;
-
-/*const mariadb = require('mariadb');
-
-const pool = mariadb.createPool({
-  host: process.env.DB_HOST || 'db',      // Ahora busca el servicio llamado 'db'
-  user: process.env.DB_USER || 'root',    // Usa root (según tu docker-compose)
-  password: process.env.DB_PASS || 'password_seguro', // Usa tu clave real
-  database: process.env.DB_NAME || 'restaurante',     // Usa la BD 'restaurante'
-  connectionLimit: 5
-});
-
-module.exports = pool;*/
