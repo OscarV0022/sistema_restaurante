@@ -89,7 +89,6 @@
     color: #c62828;
 }
 
-/* --- CLASE NUEVA: ESTADO EN ESPERA --- */
 .tarjeta-mesa.en-espera {
     background-color: #fff3e0;
     border-color: #ff9800;
@@ -115,6 +114,34 @@
     justify-content: center;
     gap: 5px;
 }
+
+.mini-mesero {
+    margin-top: 6px;
+    background: rgba(0, 0, 0, 0.06);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.mini-cocina-badge {
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    text-transform: uppercase;
+}
+
+.mini-cocina-badge.pendientes { background: #ffe0b2; color: #d35400; }
+.mini-cocina-badge.preparando { background: #d0e8fd; color: #1b4f72; }
+.mini-cocina-badge.completo { background: #d4efdf; color: #1e8449; }
 
 .mini-total {
     margin-top: 8px;
@@ -340,16 +367,4 @@
 .botones-pago-final button {
     height: 55px;
     flex: 1;
-}
-
-.mini-mesero {
-    margin-top: 6px;
-    background: rgba(0, 0, 0, 0.06);
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 3px;
 }

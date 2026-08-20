@@ -26,6 +26,7 @@ interface Mesa {
   carrito: any[];
   total: number;
   atendidoPor?: string;
+  estadoCocina?: 'pendientes' | 'preparando' | 'completo';
 }
 
 @Component({
@@ -51,14 +52,12 @@ interface Mesa {
 })
 export class Pos implements OnInit, OnDestroy {
   
-  // --- MENÚ ---
   menu: any[] = [];
   productosVisibles: any[] = [];
   categorias: string[] = [];
   busqueda: string = '';
   categoriaSeleccionada: string | null = null;
 
-  // --- MESAS Y SECCIONES ---
   configuracionSecciones = [
     { nombre: 'Sección 1', mesas: 6 },
     { nombre: 'Sección 2', mesas: 4 },
@@ -71,16 +70,19 @@ export class Pos implements OnInit, OnDestroy {
   todasLasMesas: Mesa[] = [];
   mesaSeleccionada: Mesa | null = null;
 
-  // --- AGRUPACIÓN ---
   modoAgrupar: boolean = false;
   mesaOrigen: Mesa | null = null;
 
-  // --- PAGO ---
   mostrandoPantallaPago: boolean = false; 
   montoRecibido: number | null = null;
 
-  // --- SOCKET.IO ---
   private socket!: Socket;
+  
+  // --- VARIABLES DE AUDIO PARA EL POS ---
+  private API_URL = `http://${window.location.hostname}:3000/api`;
+  private audioCtx: AudioContext | null = null;
+  audioHabilitado: boolean = false;
+  private vozPlayer: HTMLAudioElement = new Audio();
 
   constructor(
     private api: ApiService, 
@@ -91,15 +93,81 @@ export class Pos implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.cargarMenu();
     this.inicializarSocket();
+
+    // 🌟 TRUCO: Desbloquear el audio en el primer clic del mesero 🌟
+    document.addEventListener('click', () => {
+      if (!this.audioHabilitado) {
+        this.activarAudioSilencioso();
+      }
+    }, { once: true });
   }
 
   ngOnDestroy(): void {
     if (this.socket) {
       this.socket.disconnect();
     }
+    if (this.audioCtx) {
+      this.audioCtx.close();
+    }
   }
 
-  // --- OBTENER NOMBRE DEL USUARIO DE FORMA SEGURA ---
+  // --- MÉTODOS DE AUDIO ---
+  activarAudioSilencioso() {
+    this.audioHabilitado = true;
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    this.audioCtx = new AudioContextClass();
+    if (this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume();
+    }
+    console.log("Audio del POS desbloqueado con el primer clic.");
+  }
+
+  private reproducirTono(tipo: 'preparando' | 'completo') {
+    if (!this.audioHabilitado || !this.audioCtx) return;
+    try {
+      if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+      
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      
+      osc.type = 'sine';
+      // Tono diferente: más grave para "preparando", agudo para "completo"
+      osc.frequency.setValueAtTime(tipo === 'completo' ? 880 : 440, this.audioCtx.currentTime);
+      
+      gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.4);
+      
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      
+      osc.start();
+      osc.stop(this.audioCtx.currentTime + 0.4);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  private anunciarEstadoMesa(nombreMesa: string, estado: string) {
+    if (!this.audioHabilitado) return;
+
+    let texto = '';
+    if (estado === 'preparando') {
+      texto = `El pedido de la ${nombreMesa} se está preparando.`;
+    } else if (estado === 'completo') {
+      texto = `Atención. El pedido de la ${nombreMesa} ya está listo.`;
+    } else {
+      return; // No anunciar si el estado es 'pendientes'
+    }
+    
+    const url = `${this.API_URL}/tts?text=${encodeURIComponent(texto)}`;
+
+    this.vozPlayer.pause();
+    this.vozPlayer.src = url;
+    this.vozPlayer.load();
+    this.vozPlayer.play().catch(err => console.error("Error reproduciendo voz:", err));
+  }
+  // -------------------------
+
   private obtenerNombreUsuario(): string {
     try {
       const usuarioLocal = localStorage.getItem('usuario');
@@ -122,7 +190,7 @@ export class Pos implements OnInit, OnDestroy {
   }
 
   inicializarSocket() {
-    this.socket = io('http://localhost:3000');
+    this.socket = io(`http://${window.location.hostname}:3000`);
 
     const datosCargados = this.cargarEstadoGuardado();
     const tieneParaLlevar = this.todasLasMesas.some(m => m.seccion === 'PARA LLEVAR');
@@ -143,6 +211,21 @@ export class Pos implements OnInit, OnDestroy {
         const actualizada = this.todasLasMesas.find(m => m.id === this.mesaSeleccionada!.id);
         if (actualizada) {
           this.mesaSeleccionada = actualizada;
+        }
+      }
+    });
+
+    // 🌟 ESCUCHAR A LA COCINA Y AVISAR POR VOZ AL MESERO 🌟
+    this.socket.on('estado_cocina_cambiado', (data: { mesa: string, estado: 'pendientes' | 'preparando' | 'completo' }) => {
+      const mesaEncontrada = this.todasLasMesas.find(m => m.nombre === data.mesa);
+      if (mesaEncontrada) {
+        mesaEncontrada.estadoCocina = data.estado;
+        this.guardarEstado();
+
+        // Disparar audios si la cocina cambió el estado a preparando o completo
+        if (data.estado === 'preparando' || data.estado === 'completo') {
+            this.reproducirTono(data.estado);
+            this.anunciarEstadoMesa(data.mesa, data.estado);
         }
       }
     });
@@ -247,6 +330,7 @@ export class Pos implements OnInit, OnDestroy {
           if (confirmar) {
             this.mesaSeleccionada.estado = 'libre';
             this.mesaSeleccionada.atendidoPor = undefined;
+            this.mesaSeleccionada.estadoCocina = undefined;
             this.desagruparMesaActual();
             this.guardarEstado();
           } else {
@@ -254,8 +338,8 @@ export class Pos implements OnInit, OnDestroy {
           }
         } else {
           this.mesaSeleccionada.estado = 'ocupada';
+          this.mesaSeleccionada.estadoCocina = 'pendientes';
           
-          // --- ENVIAR ORDEN A COCINA ---
           if (this.socket) {
             const ticketCocina = {
               mesa: this.mesaSeleccionada.nombre,
@@ -293,6 +377,7 @@ export class Pos implements OnInit, OnDestroy {
             this.mesaSeleccionada.carrito = [];
             this.mesaSeleccionada.total = 0;
             this.mesaSeleccionada.atendidoPor = undefined;
+            this.mesaSeleccionada.estadoCocina = undefined;
             this.desagruparMesaActual();
             this.snackBar.open('Mesa LIBERADA', 'OK', { duration: 2000 });
         }
@@ -335,6 +420,7 @@ export class Pos implements OnInit, OnDestroy {
     origen.total = 0;
     origen.estado = 'libre'; 
     origen.atendidoPor = undefined;
+    origen.estadoCocina = undefined;
 
     this.calcularTotalMesaEspecifica(destino);
     if (destino.carrito.length > 0) destino.estado = 'ocupada';
@@ -356,6 +442,7 @@ export class Pos implements OnInit, OnDestroy {
         mesaHija.visible = true;
         mesaHija.estado = 'libre';
         mesaHija.atendidoPor = undefined;
+        mesaHija.estadoCocina = undefined;
         mesaHija.mesasHijas = [];
       }
     });
@@ -468,7 +555,6 @@ export class Pos implements OnInit, OnDestroy {
         const cambio = this.montoRecibido ? (this.montoRecibido - this.mesaSeleccionada!.total) : 0;
         this.snackBar.open(`✅ Venta Guardada. Cambio: Q${cambio.toFixed(2)}`, 'CERRAR', { duration: 5000 });
         
-        // --- LIMPIAR TICKET DE COCINA AL COBRAR ---
         if (this.socket && this.mesaSeleccionada) {
           this.socket.emit('limpiar_ticket', this.mesaSeleccionada.nombre);
         }
@@ -479,6 +565,7 @@ export class Pos implements OnInit, OnDestroy {
         this.mesaSeleccionada!.total = 0;
         this.mesaSeleccionada!.estado = 'libre';
         this.mesaSeleccionada!.atendidoPor = undefined;
+        this.mesaSeleccionada!.estadoCocina = undefined;
         this.mesaSeleccionada = null; 
         this.montoRecibido = null;
         this.mostrandoPantallaPago = false;

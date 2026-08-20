@@ -8,7 +8,6 @@
         </h1>
         <div class="controles-mapa" style="display: flex; gap: 10px;">
           
-          <!-- BOTÓN PARA IR A LA VISTA DE COCINA / TICKETS -->
           <button mat-flat-button color="accent" routerLink="/tickets">
             <mat-icon>receipt_long</mat-icon> Cocina
           </button>
@@ -54,10 +53,16 @@
                 {{ mesa.estado === 'en-espera' ? 'En Espera' : (mesa.estado | titlecase) }}
               </div>
 
-              <!-- Muestra quién atiende en tiempo real -->
               <div *ngIf="mesa.estado !== 'libre' && mesa.atendidoPor" class="mini-mesero">
                   <mat-icon style="font-size: 0.9rem; width: 0.9rem; height: 0.9rem; vertical-align: middle;">person</mat-icon> 
                   {{ mesa.atendidoPor }}
+              </div>
+
+              <div *ngIf="mesa.estadoCocina" class="mini-cocina-badge" [ngClass]="mesa.estadoCocina">
+                <mat-icon style="font-size: 0.85rem; width: 0.85rem; height: 0.85rem; vertical-align: middle;">
+                  {{ mesa.estadoCocina === 'completo' ? 'check' : 'restaurant' }}
+                </mat-icon>
+                {{ mesa.estadoCocina | titlecase }}
               </div>
              
               <div *ngIf="mesa.total > 0" class="mini-total">
