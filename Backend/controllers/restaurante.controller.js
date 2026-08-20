@@ -200,7 +200,45 @@ const pagarEncargo = async (req, res) => {
   }
 };
 
+const actualizarProductoMenu = async (req, res) => {
+  let conn;
+  try {
+    const { id } = req.params;
+    const { descripcion, precio, categoria } = req.body;
+    
+    conn = await pool.connect();
+    await conn.query(
+      "UPDATE menu SET descripcion = $1, precio = $2, categoria = $3 WHERE id = $4",
+      [descripcion, precio, categoria, id]
+    );
+    
+    res.json({ message: "Producto actualizado con éxito" });
+  } catch (err) {
+    console.error("Error al actualizar producto:", err);
+    res.status(500).send("Error al actualizar el producto");
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
+const eliminarProductoMenu = async (req, res) => {
+  let conn;
+  try {
+    const { id } = req.params;
+    
+    conn = await pool.connect();
+    await conn.query("DELETE FROM menu WHERE id = $1", [id]);
+    
+    res.json({ message: "Producto eliminado con éxito" });
+  } catch (err) {
+    console.error("Error al eliminar producto:", err);
+    res.status(500).send("Error al eliminar el producto");
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   obtenerMenu, guardarVenta, agregarProducto, obtenerResumenVentas,
-  procesarEncargo, obtenerEncargos, pagarEncargo, obtenerEncargosPorFecha
+  procesarEncargo, obtenerEncargos, pagarEncargo, obtenerEncargosPorFecha, actualizarProductoMenu, eliminarProductoMenu
 };
