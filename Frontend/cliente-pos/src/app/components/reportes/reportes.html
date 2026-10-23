@@ -1,0 +1,155 @@
+<div class="chiantla-reportes-container">
+  <!-- HEADER CON SELECTORES DE VISTA -->
+  <header class="header-reportes">
+    <div class="titulo-box">
+      <mat-icon class="icon-titulo">bar_chart</mat-icon>
+      <h2>Reporte de Ventas</h2>
+      <button class="btn-exportar-pdf" *ngIf="tipoVista === 'dia'" (click)="exportarReportePDF()">
+       <mat-icon>picture_as_pdf</mat-icon> Exportar como PDF
+      </button>
+    </div>
+
+    <div class="botones-vista-tabs">
+      <button 
+        class="btn-tab" 
+        [class.activo]="tipoVista === 'dia'" 
+        (click)="cambiarVista('dia')"
+      >
+        <mat-icon>today</mat-icon> Día
+      </button>
+      <button 
+        class="btn-tab" 
+        [class.activo]="tipoVista === 'semana'" 
+        (click)="cambiarVista('semana')"
+      >
+        <mat-icon>date_range</mat-icon> Semana
+      </button>
+      <button 
+        class="btn-tab" 
+        [class.activo]="tipoVista === 'mes'" 
+        (click)="cambiarVista('mes')"
+      >
+        <mat-icon>calendar_month</mat-icon> Mes
+      </button>
+    </div>
+
+    <div class="selector-fecha-box" *ngIf="tipoVista === 'dia'">
+      <label>Fecha:</label>
+      <input 
+        type="date" 
+        [(ngModel)]="fechaSeleccionada" 
+        (change)="onFechaChange()" 
+        class="input-fecha-moderno"
+      />
+    </div>
+  </header>
+
+  <div class="grid-kpis">
+    <mat-card class="kpi-card total-dinero">
+      <mat-card-content>
+        <div class="kpi-icon-box"><mat-icon>payments</mat-icon></div>
+        <div class="kpi-info">
+          <span>{{ tipoVista === 'dia' ? 'Total Ventas del Día' : tipoVista === 'semana' ? 'Estimado Semanal' : 'Estimado Mensual' }}</span>
+          <h2>Q{{ totalDia | number: '1.2-2' }}</h2>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <mat-card-content>
+        <div class="kpi-icon-box mesa"><mat-icon>table_restaurant</mat-icon></div>
+        <div class="kpi-info">
+          <span>Ventas en Mesas</span>
+          <h2>{{ ventasMesas }}</h2>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <mat-card-content>
+        <div class="kpi-icon-box llevar"><mat-icon>shopping_bag</mat-icon></div>
+        <div class="kpi-info">
+          <span>Para Llevar</span>
+          <h2>{{ ventasParaLlevar }}</h2>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <mat-card-content>
+        <div class="kpi-icon-box encargos"><mat-icon>event_note</mat-icon></div>
+        <div class="kpi-info">
+          <span>Encargos</span>
+          <h2>{{ totalEncargos }} <small>(Q{{ dineroEncargos | number: '1.2-2' }})</small></h2>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="seccion-grafico-contenedor">
+    <div *ngIf="tipoVista === 'dia'" class="card-grafico">
+      <h3>Productos Más Vendidos del Día</h3>
+      <div class="grafico-horizontal-wrapper">
+        <div *ngFor="let prod of productosMasVendidos" class="barra-horizontal-row">
+          <span class="prod-nombre" [title]="prod.nombre">{{ prod.nombre }}</span>
+          <div class="barra-track">
+            <div class="barra-fill" [style.width.%]="prod.porcentaje"></div>
+          </div>
+          <span class="prod-cant">{{ prod.cantidad }} un.</span>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="tipoVista === 'semana'" class="card-grafico">
+      <h3>📊 Ventas por semana</h3>
+      <div class="grafico-columnas-wrapper">
+        <div *ngFor="let s of ventasSemana" class="columna-item">
+          <span class="valor-tooltip">Q{{ s.total | number: '1.0-0' }}</span>
+          <div class="columna-track">
+            <div class="columna-fill" [style.height.%]="s.altura"></div>
+          </div>
+          <span class="etiqueta-eje">{{ s.dia }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="tipoVista === 'mes'" class="card-grafico">
+      <h3>📈 Ventas del mes</h3>
+      <div class="grafico-columnas-wrapper scroll-mes">
+        <div *ngFor="let m of ventasMes" class="columna-item mes-item">
+          <span class="valor-tooltip">Q{{ m.total | number: '1.0-0' }}</span>
+          <div class="columna-track">
+            <div class="columna-fill mes-fill" [style.height.%]="m.altura"></div>
+          </div>
+          <span class="etiqueta-eje">{{ m.dia }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="seccion-tabla-detalle" *ngIf="tipoVista === 'dia'">
+    <h3>Detalle de Transacciones ({{ fechaSeleccionada }})</h3>
+    <div class="tabla-wrapper">
+      <table class="tabla-moderna">
+        <thead>
+          <tr>
+            <th>ID Venta</th>
+            <th>Hora</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let venta of listaVentasDelDia">
+            <td>#{{ venta.id }}</td>
+            <!-- 🌟 CAMBIO AQUÍ: Usamos la función para asegurar la hora exacta de Guatemala 🌟 -->
+            <td>{{ formatearHoraGuatemala(venta.fecha) }}</td>
+            <td class="col-monto">Q{{ venta.total | number: '1.2-2' }}</td>
+          </tr>
+          <tr *ngIf="listaVentasDelDia.length === 0">
+            <td colspan="3" class="sin-datos">No hay registros de ventas para esta fecha.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

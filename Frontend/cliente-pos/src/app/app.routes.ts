@@ -5,9 +5,11 @@ import { LoginComponent } from './components/login/login';
 import { TicketsComponent } from './components/tickets/tickets';
 import { authGuard } from './guards/auth-guard';
 import { UsuariosAdministradorComponent } from './components/usuarios-administrador/usuarios-administrador';
-
-// 👇 1. Importamos el nuevo componente (revisa que la ruta coincida con tu estructura de carpetas)
 import { ProductosComponent } from './components/productos/productos';
+import { ChatComponent } from './components/chat/chat';
+
+// 👇 1. Importamos el componente de reportes (ajusta la ruta si es necesario)
+import { ReportesComponent } from './components/reportes/reportes';
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
@@ -42,6 +44,19 @@ export const routes: Routes = [
         component: ProductosComponent, 
         canActivate: [authGuard], 
         data: { expectedRoles: ['admin', 'cajero'] } 
+    },
+
+    { 
+        path: 'reportes', 
+        component: ReportesComponent, 
+        canActivate: [authGuard], 
+        data: { expectedRoles: ['admin'] } 
+    },
+
+    { 
+    path: 'chat', 
+    component: ChatComponent, 
+    canActivate: [authGuard] 
     },
     
     { path: '**', redirectTo: '' },

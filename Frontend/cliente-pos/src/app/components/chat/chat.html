@@ -1,0 +1,113 @@
+<div class="chiantla-chat-container">
+  <!-- HEADER -->
+  <header class="header-chat">
+    <div class="titulo-chat-box">
+      <mat-icon class="icon-titulo">forum</mat-icon>
+      <h2>Centro de Comunicación - {{ usuarioActual }}</h2>
+    </div>
+    <button class="btn-regresar" routerLink="/pos">
+      <mat-icon>arrow_back</mat-icon> Volver al POS
+    </button>
+  </header>
+
+  <!-- PANTALLA DE LLAMADA ACTIVA -->
+  <div *ngIf="enLlamada" class="pantalla-llamada-activa">
+    <div class="llamada-info-box">
+      <mat-icon class="pulse-icon">mic</mat-icon>
+      <h3>Llamada activa con {{ usuarioSeleccionado }}</h3>
+      <button class="btn-colgar" (click)="colgar()"><mat-icon>call_end</mat-icon> Colgar</button>
+    </div>
+  </div>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <div class="chat-layout" *ngIf="!enLlamada">
+    
+    <!-- BARRA LATERAL DE CONTACTOS -->
+    <div class="sidebar-usuarios">
+      <h3>Conversaciones</h3>
+      <div class="lista-contactos">
+        
+        <!-- Chat General Fijo para todos -->
+        <div 
+          class="contacto-item general"
+          [class.activo]="usuarioSeleccionado === 'GENERAL'"
+          (click)="seleccionarChat('GENERAL')"
+        >
+          <mat-icon>public</mat-icon>
+          <span>Chat General (Todos)</span>
+        </div>
+
+        <div class="separador-contactos"></div>
+        <span class="subtitulo-seccion">Usuarios en línea</span>
+
+        <!-- Lista de usuarios conectados automáticamente -->
+        <div 
+          *ngFor="let user of usuariosConectados" 
+          class="contacto-item"
+          [class.activo]="usuarioSeleccionado === user"
+          (click)="seleccionarChat(user)"
+        >
+          <mat-icon>account_circle</mat-icon>
+          <span>{{ user }}</span>
+        </div>
+
+        <div *ngIf="usuariosConectados.length === 0" class="sin-contactos">
+          <p>No hay más usuarios conectados.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÁREA DE CONVERSACIÓN -->
+    <div class="area-conversacion">
+      <div class="chat-activo-box">
+        
+        <!-- Subheader del chat seleccionado -->
+        <div class="chat-user-header">
+          <div class="info-user-activo">
+            <mat-icon>{{ usuarioSeleccionado === 'GENERAL' ? 'public' : 'person' }}</mat-icon>
+            <span>{{ usuarioSeleccionado === 'GENERAL' ? 'Chat General del Restaurante' : usuarioSeleccionado }}</span>
+          </div>
+          
+          <!-- Botón de llamada (SOLO VISIBLE EN CHAT PRIVADO) -->
+          <button class="btn-llamar-user" *ngIf="usuarioSeleccionado !== 'GENERAL'" (click)="llamar()">
+            <mat-icon>phone</mat-icon> Llamar
+          </button>
+        </div>
+
+        <!-- Contenedor de Mensajes -->
+        <div class="mensajes-scroll-container" #scrollContainer>
+          <div *ngFor="let msg of mensajesActivos" class="mensaje-bubble-wrapper" [class.mio]="msg.remitente === usuarioActual">
+            <div class="mensaje-bubble">
+              <!-- Muestra el nombre del remitente si es el chat general y no es tuyo -->
+              <span class="remitente-nombre" *ngIf="usuarioSeleccionado === 'GENERAL' && msg.remitente !== usuarioActual">
+                {{ msg.remitente }}
+              </span>
+              <p class="texto-msg">{{ msg.texto }}</p>
+              <span class="hora-msg">{{ msg.hora }}</span>
+            </div>
+          </div>
+          
+          <div *ngIf="mensajesActivos.length === 0" class="sin-mensajes">
+            <p>Escribe el primer mensaje en este chat.</p>
+          </div>
+        </div>
+
+        <!-- Input de Texto y Enviar -->
+        <div class="footer-input-chat">
+          <input 
+            type="text" 
+            [(ngModel)]="textoMensaje" 
+            (keyup.enter)="enviarMensaje()" 
+            placeholder="Escribe un mensaje..." 
+            autocomplete="off"
+          />
+          <button class="btn-enviar" (click)="enviarMensaje()">
+            <mat-icon>send</mat-icon>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

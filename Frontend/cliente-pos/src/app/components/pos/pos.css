@@ -233,20 +233,56 @@
 
 .lista-items-ticket { flex: 1; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 8px; }
 .item-fila-ticket {
-    display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; gap: 10px;
+    display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; gap: 10px; transition: all 0.2s ease;
 }
+
+/* 🌟 ESTILO DE FILA SELECCIONADA PARA PAGO SEPARADO 🌟 */
+.item-fila-ticket.item-seleccionado-pago {
+    background: #ecfdf5;
+    border-color: #10b981;
+    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2);
+}
+
 .item-detalles-ticket { flex: 1; min-width: 0; }
 .item-titulo { display: block; font-weight: 600; font-size: 0.85rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.item-sub { font-size: 0.75rem; color: #64748b; }
+.item-sub { font-size: 0.75rem; color: #64748b; display: inline-block; margin-right: 6px; }
+
+/* 🌟 BADGE PAGO PARCIAL DE UNIDADES 🌟 */
+.badge-pago-parcial {
+    display: inline-block;
+    background: #10b981;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
 .controles-cantidad-ticket { display: flex; align-items: center; gap: 4px; }
 .btn-qty { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #334155; }
 .btn-qty mat-icon { font-size: 14px; width: 14px; height: 14px; }
 .qty-num { font-weight: 700; font-size: 0.9rem; width: 20px; text-align: center; }
 .item-subtotal { font-weight: 700; font-size: 0.9rem; color: #EA580C; min-width: 60px; text-align: right; }
-.acciones-extras-ticket { display: flex; gap: 4px; }
-.btn-icon-accion { background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; border-radius: 4px; }
+.acciones-extras-ticket { display: flex; gap: 4px; align-items: center; }
+.btn-icon-accion { background: none; border: none; cursor: pointer; padding: 3px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.15s ease; }
 .btn-icon-accion.editar { color: #3b82f6; }
 .btn-icon-accion.borrar { color: #ef4444; }
+
+/* 🌟 BOTÓN DÓLAR (PAGO SEPARADO) 🌟 */
+.btn-icon-accion.pagar-separado {
+    color: #10b981;
+    border: 1px solid #a7f3d0;
+    background: #ffffff;
+}
+.btn-icon-accion.pagar-separado:hover {
+    background: #d1fae5;
+}
+.btn-icon-accion.pagar-separado.activo {
+    background: #10b981;
+    color: #ffffff;
+    border-color: #059669;
+}
+
 .btn-icon-accion mat-icon { font-size: 18px; width: 18px; height: 18px; }
 
 /* Footer Ticket POS */
@@ -255,6 +291,7 @@
 .total-bloque-pos { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .total-bloque-pos span { font-size: 1rem; color: #64748b; font-weight: 600; }
 .total-bloque-pos h1 { font-size: 1.6rem; color: #0f172a; margin: 0; font-weight: 800; }
+.total-bloque-pos h1.texto-verde-pago { color: #059669; }
 
 .botones-accion-pos { display: flex; gap: 8px; }
 .btn-ordenar { flex: 1; height: 44px; background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }

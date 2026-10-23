@@ -1,0 +1,93 @@
+/* Widgets Flotantes Globales de Llamada */
+.widget-llamada-flotante {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    border: 1px solid #e2e8f0;
+    z-index: 99999;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+.card-flotante-header {
+    background: #10b981;
+    color: white;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.card-flotante-header.activo {
+    background: #0f172a;
+}
+
+.card-flotante-body {
+    padding: 14px;
+    text-align: center;
+    background: #f8fafc;
+}
+
+.card-flotante-body p {
+    margin: 0 0 12px 0;
+    font-size: 0.9rem;
+    color: #334155;
+}
+
+.estado-llamada-txt {
+    font-size: 0.75rem !important;
+    color: #64748b !important;
+    margin-bottom: 8px !important;
+}
+
+.botones-flotantes {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn-rojo {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-verde {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-colgar-flotante {
+    background: #ef4444;
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

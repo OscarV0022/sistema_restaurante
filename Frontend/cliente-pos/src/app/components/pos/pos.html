@@ -7,9 +7,6 @@
         <h2>Mapa de Mesas</h2>
       </div>
       <div class="controles-mapa">
-        <button class="btn-secundario-mapa" routerLink="/tickets">
-          <mat-icon>receipt_long</mat-icon> Cocina
-        </button>
         <button
           class="btn-principal-mapa"
           [class.activo]="modoAgrupar"
@@ -193,11 +190,18 @@
         <div class="lista-items-ticket">
           <div
             class="item-fila-ticket"
+            [class.item-seleccionado-pago]="item.seleccionadoPago"
             *ngFor="let item of mesaSeleccionada.carrito; let i = index"
           >
             <div class="item-detalles-ticket">
               <span class="item-titulo">{{ item.descripcion }}</span>
               <span class="item-sub">Q{{ item.precio }} c/u</span>
+              <span
+                *ngIf="item.seleccionadoPago"
+                class="badge-pago-parcial"
+              >
+                Paga: {{ item.cantidadPagar }} de {{ item.cantidad }}
+              </span>
             </div>
             <div class="controles-cantidad-ticket">
               <button class="btn-qty" (click)="bajarCantidad(item)">
@@ -208,9 +212,14 @@
                 <mat-icon>add</mat-icon>
               </button>
             </div>
-            <span class="item-subtotal"
-              >Q{{ item.subtotal | number: "1.2-2" }}</span
-            >
+            <span class="item-subtotal">
+              Q{{
+                (item.seleccionadoPago
+                  ? item.cantidadPagar * item.precio
+                  : item.subtotal
+                ) | number: "1.2-2"
+              }}
+            </span>
             <div class="acciones-extras-ticket">
               <button
                 class="btn-icon-accion editar"
@@ -226,6 +235,15 @@
               >
                 <mat-icon>delete</mat-icon>
               </button>
+              <!-- 🌟 BOTÓN DE PAGO POR SEPARADO 🌟 -->
+              <button
+                class="btn-icon-accion pagar-separado"
+                [class.activo]="item.seleccionadoPago"
+                (click)="toggleSeleccionPago(item)"
+                title="Pagar por separado"
+              >
+                <mat-icon>attach_money</mat-icon>
+              </button>
             </div>
           </div>
         </div>
@@ -240,8 +258,10 @@
           </button>
 
           <div class="total-bloque-pos">
-            <span>Total a pagar:</span>
-            <h1>Q{{ mesaSeleccionada.total | number: "1.2-2" }}</h1>
+            <span>{{ tieneSeleccionPago ? "Total seleccionado:" : "Total a pagar:" }}</span>
+            <h1 [class.texto-verde-pago]="tieneSeleccionPago">
+              Q{{ totalACobrar | number: "1.2-2" }}
+            </h1>
           </div>
           
           <!-- BOTÓN DINÁMICO ORDENAR / ACTUALIZAR -->
@@ -255,7 +275,8 @@
               [disabled]="mesaSeleccionada.carrito.length === 0"
               (click)="irAPagar()"
             >
-              <mat-icon>point_of_sale</mat-icon> Cobrar
+              <mat-icon>point_of_sale</mat-icon>
+              {{ tieneSeleccionPago ? 'Cobrar Selección' : 'Cobrar' }}
             </button>
           </div>
         </div>
@@ -266,12 +287,14 @@
         <div class="pantalla-pago-container">
           <div class="pago-titulo-box">
             <mat-icon class="pago-icon-head">point_of_sale</mat-icon>
-            <h2>Procesar Pago</h2>
+            <h2>{{ tieneSeleccionPago ? "Pago por Separado" : "Procesar Pago" }}</h2>
           </div>
           <div class="resumen-pago-box">
-            <span class="label-total-pago">Total de la orden</span>
+            <span class="label-total-pago">
+              {{ tieneSeleccionPago ? "Total de productos seleccionados" : "Total de la orden" }}
+            </span>
             <h1 class="monto-total-pago">
-              Q{{ mesaSeleccionada.total | number: "1.2-2" }}
+              Q{{ totalACobrar | number: "1.2-2" }}
             </h1>
 
             <div class="input-efectivo-wrapper">

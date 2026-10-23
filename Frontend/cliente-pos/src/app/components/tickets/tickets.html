@@ -3,7 +3,7 @@
   <header class="kds-header">
     <div class="brand">
       <mat-icon>restaurant_menu</mat-icon>
-      <h1>Cocina - La Chiantlequita</h1>
+      <h1>Tickets</h1>
     </div>
     
     <div class="controles-superiores">
@@ -14,32 +14,21 @@
       <div class="audio-activo" *ngIf="audioHabilitado">
         <mat-icon>hearing</mat-icon> <span>Audio Listo</span>
       </div>
-
-      <button mat-fab extended color="primary" class="btn-pos" (click)="irAlPos()" matTooltip="Regresar al POS">
-        <mat-icon>point_of_sale</mat-icon> Punto de Venta
-      </button>
     </div>
   </header>
-
-  <!-- CONTENEDOR DE TICKETS -->
   <main class="kds-main">
     
-    <!-- PANTALLA VACÍA -->
     <div *ngIf="tickets.length === 0" class="sin-pedidos">
       <mat-icon class="icono-vacio">outdoor_grill</mat-icon>
       <h2>¡Cocina al día!</h2>
       <p>No hay pedidos pendientes en este momento.</p>
     </div>
-
-    <!-- CUADRÍCULA DE TICKETS (GRID) -->
     <div class="kds-grid" *ngIf="tickets.length > 0">
       
-      <!-- CADA TICKET -->
       <div class="ticket-card" 
            *ngFor="let ticket of tickets" 
            [ngClass]="'estado-' + ticket.estado">
         
-        <!-- CABECERA DEL TICKET -->
         <div class="ticket-header">
           <div class="info-mesa">
             <h2>{{ ticket.mesa }}</h2>
@@ -59,7 +48,6 @@
           </div>
         </div>
 
-        <!-- CUERPO DEL TICKET (Oculto si está minimizado) -->
         <div class="ticket-body" *ngIf="!ticket.minimizado">
           <div class="etiqueta-estado" [ngClass]="ticket.estado">
             {{ ticket.estado | uppercase }}
@@ -72,7 +60,6 @@
             </li>
           </ul>
 
-          <!-- 🌟 AVISO VISUAL DE PRODUCTOS ELIMINADOS (AHORA SÍ APARECERÁ AQUÍ) 🌟 -->
           <div class="aviso-eliminados" *ngIf="ticket.eliminados && ticket.eliminados.length > 0">
             <div class="titulo-eliminados">
               <mat-icon>warning</mat-icon> <span>Eliminado de la orden:</span>
@@ -85,12 +72,11 @@
           </div>
         </div>
 
-        <!-- ACCIONES DEL TICKET -->
         <div class="ticket-footer" *ngIf="!ticket.minimizado">
           <button class="btn-accion btn-preparar" 
                   *ngIf="ticket.estado === 'pendientes'" 
                   (click)="cambiarEstado(ticket, 'preparando')">
-            <mat-icon>soup_kitchen</mat-icon> PREPARAR
+            <mat-icon>soup_kitchen</mat-icon> PREPARANDO
           </button>
           
           <button class="btn-accion btn-completar" 

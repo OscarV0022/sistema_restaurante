@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api';
+import { SocketService } from '../../services/socket';
 import { io, Socket } from 'socket.io-client';
 
 import { MatGridListModule } from '@angular/material/grid-list';
@@ -27,7 +28,7 @@ interface Mesa {
   total: number;
   atendidoPor?: string;
   estadoCocina?: 'pendientes' | 'preparando' | 'completo';
-  ordenEnviada?: boolean; // 🌟 Bandera para controlar si ya se dio clic en Ordenar 🌟
+  ordenEnviada?: boolean;
 }
 
 @Component({
@@ -87,7 +88,8 @@ export class Pos implements OnInit, OnDestroy {
   constructor(
     private api: ApiService, 
     private snackBar: MatSnackBar,
-    private router: Router 
+    private router: Router,
+    private socketService: SocketService // 👈 Inyectamos el servicio
   ) {}
 
   ngOnInit(): void {
@@ -197,10 +199,15 @@ export class Pos implements OnInit, OnDestroy {
   }
 
   inicializarSocket() {
+    // Opcional: puedes usar this.socketService.getSocket() para unificar sockets
     this.socket = io(`http://${window.location.hostname}:3000`);
 
     this.socket.on('connect', () => {
       this.socket.emit('solicitar_mesas');
+      
+      // 🌟 REGISTRAMOS AL USUARIO EN EL SOCKET APENAS CONECTA AL POS 🌟
+      const nombreUsuario = this.obtenerNombreUsuario();
+      this.socket.emit('registrar_usuario', nombreUsuario);
     });
 
     this.socket.on('sincronizar_mesas', (mesasRemotas: Mesa[]) => {
@@ -216,6 +223,10 @@ export class Pos implements OnInit, OnDestroy {
           if (actualizada) {
             this.mesaSeleccionada = actualizada;
           }
+        }
+      } else {
+        if (this.todasLasMesas && this.todasLasMesas.length > 0) {
+          this.socket.emit('actualizar_mesas', this.todasLasMesas);
         }
       }
     });
@@ -304,7 +315,6 @@ export class Pos implements OnInit, OnDestroy {
         });
       }
     });
-    this.guardarEstado();
   }
 
   getMesasPorSeccion(seccion: string) {
@@ -324,6 +334,11 @@ export class Pos implements OnInit, OnDestroy {
       this.guardarEstado();
     }
 
+    mesa.carrito.forEach(item => {
+      item.seleccionadoPago = false;
+      item.cantidadPagar = 0;
+    });
+
     this.montoRecibido = null; 
     this.mostrandoPantallaPago = false; 
     this.verCategorias(); 
@@ -332,6 +347,11 @@ export class Pos implements OnInit, OnDestroy {
 
   regresarAlMapa() { 
       if (this.mesaSeleccionada) {
+        this.mesaSeleccionada.carrito.forEach(item => {
+          item.seleccionadoPago = false;
+          item.cantidadPagar = 0;
+        });
+
         if (this.mesaSeleccionada.carrito.length === 0) {
           const confirmar = confirm('¿Estás seguro de regresar? No se ha ordenado nada.');
           if (confirmar) {
@@ -352,7 +372,7 @@ export class Pos implements OnInit, OnDestroy {
         } else {
           this.mesaSeleccionada.estado = 'ocupada';
           this.mesaSeleccionada.estadoCocina = 'pendientes';
-          this.mesaSeleccionada.ordenEnviada = true; // 🌟 Marcamos que la orden ya fue enviada (cambiará a Actualizar) 🌟
+          this.mesaSeleccionada.ordenEnviada = true;
           
           if (this.socket) {
             const ticketCocina = {
@@ -491,7 +511,9 @@ export class Pos implements OnInit, OnDestroy {
         descripcion: producto.descripcion,
         precio: Number(producto.precio),
         cantidad: 1,
-        subtotal: Number(producto.precio)
+        subtotal: Number(producto.precio),
+        seleccionadoPago: false,
+        cantidadPagar: 0
       });
     }
     this.calcularTotalMesaEspecifica(this.mesaSeleccionada);
@@ -516,6 +538,9 @@ export class Pos implements OnInit, OnDestroy {
     if (item.cantidad > 1) {
       item.cantidad--;
       item.subtotal = item.cantidad * item.precio;
+      if (item.seleccionadoPago && item.cantidadPagar > item.cantidad) {
+        item.cantidadPagar = item.cantidad;
+      }
       this.calcularTotalMesaEspecifica(this.mesaSeleccionada!);
       this.guardarEstado();
     }
@@ -542,6 +567,48 @@ export class Pos implements OnInit, OnDestroy {
     }
   }
 
+  toggleSeleccionPago(item: any) {
+    if (item.seleccionadoPago) {
+      item.seleccionadoPago = false;
+      item.cantidadPagar = 0;
+      return;
+    }
+
+    if (item.cantidad === 1) {
+      item.seleccionadoPago = true;
+      item.cantidadPagar = 1;
+    } else {
+      const resp = prompt(
+        `Hay ${item.cantidad} unidades de "${item.descripcion}".\n¿Cuántas unidades va a pagar esta persona?`,
+        '1'
+      );
+
+      if (resp !== null) {
+        const cant = parseInt(resp, 10);
+        if (!isNaN(cant) && cant >= 1 && cant <= item.cantidad) {
+          item.seleccionadoPago = true;
+          item.cantidadPagar = cant;
+        } else {
+          this.snackBar.open(`Ingresa una cantidad entre 1 y ${item.cantidad}`, 'Error', { duration: 2000 });
+        }
+      }
+    }
+  }
+
+  get tieneSeleccionPago(): boolean {
+    if (!this.mesaSeleccionada) return false;
+    return this.mesaSeleccionada.carrito.some(item => item.seleccionadoPago && item.cantidadPagar > 0);
+  }
+
+  get totalACobrar(): number {
+    if (!this.mesaSeleccionada) return 0;
+    const seleccionados = this.mesaSeleccionada.carrito.filter(item => item.seleccionadoPago && item.cantidadPagar > 0);
+    if (seleccionados.length > 0) {
+      return seleccionados.reduce((acc, item) => acc + (item.cantidadPagar * item.precio), 0);
+    }
+    return this.mesaSeleccionada.total;
+  }
+
   calcularTotalMesaEspecifica(mesa: Mesa) {
     mesa.total = mesa.carrito.reduce((acc, item) => acc + item.subtotal, 0);
   }
@@ -557,40 +624,83 @@ export class Pos implements OnInit, OnDestroy {
 
   get cambioCalculado(): number {
       if (!this.montoRecibido) return 0;
-      return this.montoRecibido - (this.mesaSeleccionada ? this.mesaSeleccionada.total : 0);
+      return this.montoRecibido - this.totalACobrar;
   }
 
   confirmarVentaFinal() {
     if (!this.mesaSeleccionada || this.mesaSeleccionada.carrito.length === 0) return;
     
-    if (this.montoRecibido && this.montoRecibido < this.mesaSeleccionada.total) {
+    const montoCobrar = this.totalACobrar;
+
+    if (this.montoRecibido && this.montoRecibido < montoCobrar) {
         this.snackBar.open('❌ Falta dinero.', 'Corregir', { duration: 2000 });
         return;
     }
 
+    const esPagoSeparado = this.tieneSeleccionPago;
+    
+    const itemsPagados = esPagoSeparado 
+      ? this.mesaSeleccionada.carrito
+          .filter(item => item.seleccionadoPago && item.cantidadPagar > 0)
+          .map(item => ({
+            descripcion: item.descripcion,
+            precio: item.precio,
+            cantidad: item.cantidadPagar,
+            subtotal: item.cantidadPagar * item.precio
+          }))
+      : this.mesaSeleccionada.carrito;
+
     const venta = {
-      total: this.mesaSeleccionada.total,
-      detalles: this.mesaSeleccionada.carrito
+      total: montoCobrar,
+      detalles: itemsPagados
     };
 
     this.api.guardarVenta(venta).subscribe({
       next: (res: any) => {
-        const cambio = this.montoRecibido ? (this.montoRecibido - this.mesaSeleccionada!.total) : 0;
+        const cambio = this.montoRecibido ? (this.montoRecibido - montoCobrar) : 0;
         this.snackBar.open(`✅ Venta Guardada. Cambio: Q${cambio.toFixed(2)}`, 'CERRAR', { duration: 5000 });
         
-        if (this.socket && this.mesaSeleccionada) {
-          this.socket.emit('limpiar_ticket', this.mesaSeleccionada.nombre);
+        if (esPagoSeparado) {
+          const nuevoCarrito: any[] = [];
+          
+          this.mesaSeleccionada!.carrito.forEach(item => {
+            if (item.seleccionadoPago && item.cantidadPagar > 0) {
+              const restantes = item.cantidad - item.cantidadPagar;
+              if (restantes > 0) {
+                item.cantidad = restantes;
+                item.subtotal = restantes * item.precio;
+                item.seleccionadoPago = false;
+                item.cantidadPagar = 0;
+                nuevoCarrito.push(item);
+              }
+            } else {
+              nuevoCarrito.push(item);
+            }
+          });
+
+          this.mesaSeleccionada!.carrito = nuevoCarrito;
+          this.calcularTotalMesaEspecifica(this.mesaSeleccionada!);
+        } else {
+          this.mesaSeleccionada!.carrito = [];
+          this.mesaSeleccionada!.total = 0;
         }
 
-        this.desagruparMesaActual();
+        if (this.mesaSeleccionada!.carrito.length === 0) {
+          if (this.socket && this.mesaSeleccionada) {
+            this.socket.emit('limpiar_ticket', this.mesaSeleccionada.nombre);
+          }
 
-        this.mesaSeleccionada!.carrito = [];
-        this.mesaSeleccionada!.total = 0;
-        this.mesaSeleccionada!.estado = 'libre';
-        this.mesaSeleccionada!.atendidoPor = undefined;
-        this.mesaSeleccionada!.estadoCocina = undefined;
-        this.mesaSeleccionada!.ordenEnviada = false;
-        this.mesaSeleccionada = null; 
+          this.desagruparMesaActual();
+
+          this.mesaSeleccionada!.carrito = [];
+          this.mesaSeleccionada!.total = 0;
+          this.mesaSeleccionada!.estado = 'libre';
+          this.mesaSeleccionada!.atendidoPor = undefined;
+          this.mesaSeleccionada!.estadoCocina = undefined;
+          this.mesaSeleccionada!.ordenEnviada = false;
+          this.mesaSeleccionada = null; 
+        }
+
         this.montoRecibido = null;
         this.mostrandoPantallaPago = false;
         

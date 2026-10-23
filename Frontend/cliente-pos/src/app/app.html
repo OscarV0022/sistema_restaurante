@@ -1,5 +1,32 @@
 @if (showHeader) {
   <app-header></app-header>
 }
-
 <router-outlet></router-outlet>
+
+<div *ngIf="llamadaEntrante" class="widget-llamada-flotante">
+  <div class="card-flotante-header">
+    <mat-icon class="pulse-icon">phone_in_talk</mat-icon>
+    <span>Llamada entrante...</span>
+  </div>
+  <div class="card-flotante-body">
+    <p><strong>{{ personaLlamando }}</strong> te está llamando</p>
+    <div class="botones-flotantes">
+      <button class="btn-rojo" (click)="rechazarLlamada()">Rechazar</button>
+      <button class="btn-verde" (click)="aceptarLlamada()">Contestar</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🌟 WIDGET FLOTANTE DE LLAMADA ACTIVA (GLOBAL - PERMITE SEGUIR USANDO EL SISTEMA) 🌟 -->
+<div *ngIf="llamadaActiva" class="widget-llamada-flotante activa">
+  <div class="card-flotante-header activo">
+    <mat-icon class="mic-icon">mic</mat-icon>
+    <span>En llamada con: <strong>{{ personaEnLlamada }}</strong></span>
+  </div>
+  <div class="card-flotante-body">
+    <p class="estado-llamada-txt">Audio en curso (Sistema disponible)</p>
+    <button class="btn-colgar-flotante" (click)="colgarLlamada()">
+      <mat-icon>call_end</mat-icon> Colgar Llamada
+    </button>
+  </div>
+</div>

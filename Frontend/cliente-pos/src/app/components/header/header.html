@@ -31,8 +31,6 @@
       <li><a routerLink="/productos" routerLinkActive="active" (click)="toggleMenu()">Productos</a></li> 
     }
     
-    <li><a routerLink="/reservaciones" routerLinkActive="active" (click)="toggleMenu()">Reservaciones</a></li>
-    
     @if(canAccess(['admin', 'cocina'])) { 
       <li><a routerLink="/tickets" routerLinkActive="active" (click)="toggleMenu()">Tickets</a></li> 
     }

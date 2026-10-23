@@ -10,7 +10,6 @@ export class ApiService {
 
   constructor(private http: HttpClient) { }
 
-  // Método auxiliar privado para obtener los headers con el Token de sesión
   private getHeaders() {
     const token = localStorage.getItem('token') || '';
     return {
@@ -43,5 +42,9 @@ export class ApiService {
 
   pagarEncargo(id: number) {
     return this.http.put(`${this.apiUrl}/api/encargos/${id}/pagar`, {}, this.getHeaders());
+  }
+  
+  getReportePorFecha(fecha: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/reportes/${fecha}`, this.getHeaders());
   }
 }
