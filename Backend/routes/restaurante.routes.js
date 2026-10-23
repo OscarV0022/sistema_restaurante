@@ -12,5 +12,6 @@ router.put('/encargos/:id/pagar', restauranteController.pagarEncargo);
 router.get('/encargos/:fecha', restauranteController.obtenerEncargosPorFecha);
 router.put('/menu/:id', restauranteController.actualizarProductoMenu);
 router.delete('/menu/:id', restauranteController.eliminarProductoMenu);
+router.get('/reportes/:fecha', restauranteController.obtenerReportePorFecha);
 
 module.exports = router;

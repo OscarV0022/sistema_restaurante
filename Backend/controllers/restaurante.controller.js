@@ -20,7 +20,7 @@ const guardarVenta = async (req, res) => {
     conn = await pool.connect();
     const { total, detalles } = req.body; 
     
-    // Cambio: Postgres usa RETURNING id para devolver el ID insertado
+    // Insertamos solo el total; Supabase asigna automáticamente la fecha/hora exacta de Guatemala
     const { rows } = await conn.query(
       "INSERT INTO ventas (total) VALUES ($1) RETURNING id", 
       [total]
@@ -35,7 +35,7 @@ const guardarVenta = async (req, res) => {
     }
     res.json({ message: "Venta guardada", id: ventaId });
   } catch (err) {
-    console.error(err); 
+    console.error("Error al guardar venta:", err); 
     res.status(500).send("Error al guardar venta");
   } finally {
     if (conn) conn.release();
@@ -49,7 +49,6 @@ const agregarProducto = async (req, res) => {
     const data = req.body;
 
     if (Array.isArray(data)) {
-      // Postgres no tiene conn.batch(), lo resolvemos con un iterador rápido
       for (const item of data) {
         await conn.query(
           "INSERT INTO menu (descripcion, precio, categoria) VALUES ($1, $2, $3)", 
@@ -77,8 +76,11 @@ const obtenerResumenVentas = async (req, res) => {
   let conn;
   try {
     conn = await pool.connect();
-    // Cambio: CURDATE() es CURRENT_DATE en Postgres
-    const query = "SELECT COALESCE(SUM(total), 0) as total_dia FROM ventas WHERE DATE(fecha) = CURRENT_DATE";
+    const query = `
+      SELECT COALESCE(SUM(total), 0) as total_dia 
+      FROM ventas 
+      WHERE DATE(fecha AT TIME ZONE 'America/Guatemala') = DATE(NOW() AT TIME ZONE 'America/Guatemala')
+    `;
     const { rows } = await conn.query(query);
     const totalDia = Number(rows[0].total_dia);
     res.json({ total: totalDia });
@@ -110,7 +112,10 @@ const procesarEncargo = async (req, res) => {
     }
 
     if (estado_pago === 'PAGADO') {
-        const resVenta = await conn.query("INSERT INTO ventas (total) VALUES ($1) RETURNING id", [total]);
+        const resVenta = await conn.query(
+          "INSERT INTO ventas (total) VALUES ($1) RETURNING id", 
+          [total]
+        );
         const ventaId = resVenta.rows[0].id;
 
         for (const item of detalles) {
@@ -123,7 +128,7 @@ const procesarEncargo = async (req, res) => {
     }
     res.json({ message: "Encargo procesado exitosamente" });
   } catch (err) {
-    console.error(err);
+    console.error("Error al guardar encargo:", err);
     res.status(500).send("Error al guardar encargo");
   } finally {
     if (conn) conn.release();
@@ -181,7 +186,10 @@ const pagarEncargo = async (req, res) => {
     const total = check[0].total;
     await conn.query("UPDATE encargos SET estado_pago = 'PAGADO' WHERE id = $1", [idEncargo]);
 
-    const resVenta = await conn.query("INSERT INTO ventas (total) VALUES ($1) RETURNING id", [total]);
+    const resVenta = await conn.query(
+      "INSERT INTO ventas (total) VALUES ($1) RETURNING id", 
+      [total]
+    );
     const idVenta = resVenta.rows[0].id;
 
     await conn.query(`
@@ -193,7 +201,7 @@ const pagarEncargo = async (req, res) => {
 
     res.json({ message: "Encargo cobrado y registrado en ventas" });
   } catch (err) {
-    console.error(err);
+    console.error("Error al pagar encargo:", err);
     res.status(500).send(err.message);
   } finally {
     if (conn) conn.release();
@@ -238,7 +246,96 @@ const eliminarProductoMenu = async (req, res) => {
   }
 };
 
+const obtenerReportePorFecha = async (req, res) => {
+  let conn;
+  try {
+    conn = await pool.connect();
+    // Si no viene fecha en params, sacamos YYYY-MM-DD en zona horaria de Guatemala
+    const fecha = req.params.fecha || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' });
+
+    // 1. Ventas del día convirtiendo explícitamente a la fecha de Guatemala
+    const { rows: ventas } = await conn.query(
+      `SELECT id, fecha, total 
+       FROM ventas 
+       WHERE DATE(fecha AT TIME ZONE 'America/Guatemala') = $1::date 
+       ORDER BY fecha DESC`,
+      [fecha]
+    );
+
+    const totalDinero = ventas.reduce((acc, v) => acc + Number(v.total), 0);
+    const totalVentasCount = ventas.length;
+
+    const ventaIds = ventas.map(v => v.id);
+    let detalleVentasDia = [];
+    if (ventaIds.length > 0) {
+      const { rows: detalles } = await conn.query(
+        `SELECT id_venta, descripcion_producto, precio_unitario, cantidad, subtotal 
+         FROM detalle_ventas WHERE id_venta = ANY($1)`,
+        [ventaIds]
+      );
+      detalleVentasDia = detalles;
+    }
+
+    const ventasDiaConDetalle = ventas.map(v => ({
+      ...v,
+      detalles: detalleVentasDia.filter(d => d.id_venta === v.id)
+    }));
+
+    // 2. Gráfico de la Semana usando la fecha local de Guatemala
+    const { rows: ventasSemana } = await conn.query(
+      `SELECT DATE(fecha AT TIME ZONE 'America/Guatemala') as dia, SUM(total) as total 
+       FROM ventas 
+       WHERE DATE(fecha AT TIME ZONE 'America/Guatemala') >= $1::date - INTERVAL '6 days' 
+         AND DATE(fecha AT TIME ZONE 'America/Guatemala') <= $1::date
+       GROUP BY DATE(fecha AT TIME ZONE 'America/Guatemala') 
+       ORDER BY dia ASC`,
+      [fecha]
+    );
+
+    // 3. Gráfico del Mes usando la fecha local de Guatemala
+    const { rows: ventasMes } = await conn.query(
+      `SELECT DATE(fecha AT TIME ZONE 'America/Guatemala') as dia, SUM(total) as total 
+       FROM ventas 
+       WHERE EXTRACT(MONTH FROM (fecha AT TIME ZONE 'America/Guatemala')) = EXTRACT(MONTH FROM $1::date)
+         AND EXTRACT(YEAR FROM (fecha AT TIME ZONE 'America/Guatemala')) = EXTRACT(YEAR FROM $1::date)
+       GROUP BY DATE(fecha AT TIME ZONE 'America/Guatemala') 
+       ORDER BY dia ASC`,
+      [fecha]
+    );
+
+    // 4. Encargos del día usando la fecha local de Guatemala
+    const { rows: encargos } = await conn.query(
+      `SELECT COUNT(*) as total_encargos, COALESCE(SUM(total), 0) as dinero_encargos 
+       FROM encargos 
+       WHERE DATE(fecha_registro AT TIME ZONE 'America/Guatemala') = $1::date`,
+      [fecha]
+    );
+
+    const encargosCount = Number(encargos[0].total_encargos);
+    const dineroEncargos = Number(encargos[0].dinero_encargos);
+
+    res.json({
+      fecha,
+      totalDinero,
+      totalVentasCount,
+      mesasCount: totalVentasCount,
+      llevarCount: 0,              
+      encargosCount,
+      dineroEncargos,
+      detalleVentas: ventasDiaConDetalle,
+      ventasSemana,
+      ventasMes
+    });
+
+  } catch (err) {
+    console.error("Error al obtener reporte:", err);
+    res.status(500).send("Error al obtener el reporte");
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   obtenerMenu, guardarVenta, agregarProducto, obtenerResumenVentas,
-  procesarEncargo, obtenerEncargos, pagarEncargo, obtenerEncargosPorFecha, actualizarProductoMenu, eliminarProductoMenu
+  procesarEncargo, obtenerEncargos, pagarEncargo, obtenerEncargosPorFecha, actualizarProductoMenu, eliminarProductoMenu, obtenerReportePorFecha
 };

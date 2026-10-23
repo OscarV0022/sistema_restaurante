@@ -46,14 +46,23 @@ app.get('/', (req, res) => {
 });
 
 let ticketsCocina = [];
+let estadoMesasGlobal = []; // Guarda el estado real de todas las mesas en el servidor
+let usuariosConectados = {}; // Mapeo de nombreUsuario -> socket.id para el chat privado
 
 io.on('connection', (socket) => {
   console.log(`Cliente conectado: ${socket.id}`);
 
   socket.emit('tickets_iniciales', ticketsCocina);
 
+  // Cuando cualquier usuario inicia sesión o entra al POS, pide las mesas reales
+  socket.on('solicitar_mesas', () => {
+    socket.emit('sincronizar_mesas', estadoMesasGlobal);
+  });
+
+  // Cuando una mesa cambia de estado o se agrega un producto
   socket.on('actualizar_mesas', (mesas) => {
-    socket.broadcast.emit('sincronizar_mesas', mesas);
+    estadoMesasGlobal = mesas;
+    socket.broadcast.emit('sincronizar_mesas', estadoMesasGlobal);
   });
 
   socket.on('nueva_orden', (orden) => {
@@ -82,7 +91,48 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('remover_ticket', nombreMesa);
   });
 
+  // 🌟 REGISTRAR USUARIO PARA CHAT PRIVADO Y LISTA 🌟
+  socket.on('registrar_usuario', (nombreUsuario) => {
+    usuariosConectados[nombreUsuario] = socket.id;
+    io.emit('lista_usuarios', Object.keys(usuariosConectados));
+  });
+
+  // 🌟 CHAT GENERAL (A TODOS) 🌟
+  socket.on('enviar_mensaje_general', (data) => {
+    socket.broadcast.emit('nuevo_mensaje_general', data);
+  });
+
+  // 🌟 CHAT PRIVADO DE USUARIO A USUARIO 🌟
+  socket.on('enviar_mensaje_privado', (data) => {
+    const socketIdDestinatario = usuariosConectados[data.destinatario];
+    if (socketIdDestinatario) {
+      io.to(socketIdDestinatario).emit('nuevo_mensaje_privado', data);
+    }
+  });
+
+  // 🌟 LLAMADAS PRIVADAS DE USUARIO A USUARIO 🌟
+  socket.on('iniciar_llamada_privada', (data) => {
+    const socketIdDestinatario = usuariosConectados[data.para];
+    if (socketIdDestinatario) {
+      io.to(socketIdDestinatario).emit('recibir_llamada_privada', { de: data.de });
+    }
+  });
+
+  socket.on('colgar_llamada_privada', (data) => {
+    const socketIdDestinatario = usuariosConectados[data.para];
+    if (socketIdDestinatario) {
+      io.to(socketIdDestinatario).emit('llamada_finalizada_privada');
+    }
+  });
+
   socket.on('disconnect', () => {
+    for (let usuario in usuariosConectados) {
+      if (usuariosConectados[usuario] === socket.id) {
+        delete usuariosConectados[usuario];
+        break;
+      }
+    }
+    io.emit('lista_usuarios', Object.keys(usuariosConectados));
     console.log(`Cliente desconectado: ${socket.id}`);
   });
 });
