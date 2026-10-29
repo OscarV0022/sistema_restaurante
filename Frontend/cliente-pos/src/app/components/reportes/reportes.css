@@ -279,3 +279,99 @@
 .btn-exportar-pdf:hover {
     background: #b91c1c;
 }
+
+/* --- SECCIÓN ARQUEO DE EFECTIVO --- */
+.seccion-caja-arqueo {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+}
+
+.header-arqueo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 10px;
+}
+
+.titulo-arqueo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.titulo-arqueo h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.icon-caja {
+    color: #10B981;
+}
+
+.badge-arqueo-estado {
+    background: #ecfdf5;
+    color: #059669;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+    border: 1px solid #a7f3d0;
+}
+
+.grid-resumen-caja {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.tarjeta-caja-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.label-caja {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.valor-caja {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 6px 0;
+}
+
+.valor-caja.entrada-color { color: #059669; }
+.valor-caja.salida-color { color: #dc2626; }
+
+.sub-caja {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.tarjeta-caja-item.total-caja-esperado {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border-color: #fdba74;
+}
+
+.valor-caja-total {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #EA580C;
+    margin: 4px 0;
+}

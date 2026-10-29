@@ -1,19 +1,15 @@
 <nav class="navbar mat-elevation-z4">
-  <!-- Izquierda: Logo -->
   <div class="logo">Restaurante <span class="logo-accent">Chiantlequita</span></div>
   
-  <!-- Centro: Reloj Digital (Solo horas y minutos) -->
   <div class="reloj-digital">
     <mat-icon class="reloj-icono">schedule</mat-icon>
     <span>{{ horaActual }}</span>
   </div>
 
-  <!-- Botón hamburguesa para móviles -->
   <button class="hamburger-btn" (click)="toggleMenu()">
     <mat-icon>{{ menuAbierto ? 'close' : 'menu' }}</mat-icon>
   </button>
-  
-  <!-- Derecha: Enlaces y Salir -->
+ 
   <ul class="nav-links" [class.show-menu]="menuAbierto">
     @if(canAccess(['admin', 'mesero', 'cajero'])) { 
       <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="toggleMenu()">Inicio</a></li> 
@@ -24,8 +20,6 @@
     @if(canAccess(['admin', 'cajero'])) { 
       <li><a routerLink="/reportes" routerLinkActive="active" (click)="toggleMenu()">Reportes</a></li> 
     }
-    
-    <li><a routerLink="/chat" routerLinkActive="active" (click)="toggleMenu()">Chat</a></li>
    
     @if(canAccess(['admin', 'cajero'])) { 
       <li><a routerLink="/productos" routerLinkActive="active" (click)="toggleMenu()">Productos</a></li> 
@@ -38,6 +32,14 @@
     @if(canAccess(['admin'])) { 
       <li><a routerLink="/usuarios" routerLinkActive="active" (click)="toggleMenu()">Usuarios</a></li> 
     }
+
+    @if(canAccess(['admin'])) {
+      <li>
+        <button class="btn-efectivo" (click)="abrirModalEfectivo(); toggleMenu()">
+          <mat-icon>payments</mat-icon> Efectivo
+        </button>
+      </li>
+    }
     
     <li>
       <button (click)="logout(); toggleMenu()" class="btn-logout">
@@ -46,3 +48,120 @@
     </li>
   </ul>
 </nav>
+
+<!-- MODAL FLOTANTE: ENTRADAS Y SALIDAS DE EFECTIVO -->
+<div class="modal-overlay" *ngIf="mostrarModalEfectivo">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-header-titulo">
+        <mat-icon class="icon-header-modal">point_of_sale</mat-icon>
+        <h3>Control de Efectivo</h3>
+      </div>
+      <button class="btn-cerrar-modal" (click)="cerrarModalEfectivo()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="botones-tipo-wrapper">
+      <button 
+        class="btn-tipo entrada" 
+        [class.activo]="tipoMovimiento === 'ENTRADA'"
+        (click)="seleccionarTipo('ENTRADA')">
+        <mat-icon>add_circle</mat-icon> Entrada
+      </button>
+      <button 
+        class="btn-tipo salida" 
+        [class.activo]="tipoMovimiento === 'SALIDA'"
+        (click)="seleccionarTipo('SALIDA')">
+        <mat-icon>remove_circle</mat-icon> Salida
+      </button>
+    </div>
+
+    <div class="formulario-movimiento" *ngIf="tipoMovimiento">
+      <h4 [class.texto-entrada]="tipoMovimiento === 'ENTRADA'" [class.texto-salida]="tipoMovimiento === 'SALIDA'">
+        {{ tipoMovimiento === 'ENTRADA' ? 'Registrar Ingreso de Efectivo (+)' : 'Registrar Salida de Efectivo (-)' }}
+      </h4>
+
+      <div class="campo-grupo">
+        <label>Monto (Q):</label>
+        <div class="input-icono">
+          <mat-icon>payments</mat-icon>
+          <input type="number" [(ngModel)]="montoMovimiento" placeholder="0.00" min="0.01" step="0.01" autofocus />
+        </div>
+      </div>
+
+      <div class="campo-grupo">
+        <label>Motivo / Descripción:</label>
+        <textarea [(ngModel)]="motivoMovimiento" rows="2" placeholder="Ej. Pago a proveedor de verduras, cambio inicial, etc."></textarea>
+      </div>
+
+      <button 
+        class="btn-guardar-movimiento" 
+        [class.btn-guardar-entrada]="tipoMovimiento === 'ENTRADA'"
+        [class.btn-guardar-salida]="tipoMovimiento === 'SALIDA'"
+        [disabled]="guardando"
+        (click)="guardarMovimiento()">
+        <mat-icon>{{ guardando ? 'hourglass_top' : 'save' }}</mat-icon> 
+        {{ guardando ? 'Guardando...' : ('Guardar ' + (tipoMovimiento === 'ENTRADA' ? 'Entrada' : 'Salida')) }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OBLIGATORIO: APERTURA DE CAJA / ESPERA -->
+<div class="modal-overlay modal-bloqueante" *ngIf="mostrarModalInicial">
+  <!-- CASO 1: VISTA PARA EL ADMINISTRADOR (INGRESO DE MONTO) -->
+  <div class="modal-card" *ngIf="getRole() === 'admin'">
+    <div class="modal-header">
+      <div class="modal-header-titulo">
+        <mat-icon class="icon-header-modal">lock_clock</mat-icon>
+        <h3>Apertura de Caja</h3>
+      </div>
+    </div>
+    
+    <p class="descripcion-inicial">
+      Bienvenido. Debes ingresar el <strong>monto inicial de caja</strong> para poder operar durante el día.
+    </p>
+
+    <div class="campo-grupo">
+      <label>Monto Inicial (Q):</label>
+      <div class="input-icono">
+        <mat-icon>payments</mat-icon>
+        <input type="number" [(ngModel)]="montoInicial" placeholder="0.00" min="0.01" step="0.01" autofocus />
+      </div>
+    </div>
+
+    <button 
+      class="btn-guardar-movimiento btn-guardar-entrada" 
+      [disabled]="guardando"
+      (click)="guardarCajaInicial()">
+      <mat-icon>{{ guardando ? 'hourglass_top' : 'check_circle' }}</mat-icon> 
+      {{ guardando ? 'Registrando...' : 'Confirmar Apertura de Caja' }}
+    </button>
+  </div>
+
+  <!-- CASO 2: VISTA PARA OTROS ROLES (SOLO MENSAJE DE ESPERA) -->
+  <div class="modal-card modal-espera-card" *ngIf="getRole() !== 'admin'">
+    <div class="icono-espera-box">
+      <mat-icon class="icono-reloj-espera">hourglass_empty</mat-icon>
+    </div>
+
+    <h3 class="titulo-espera">Caja No Iniciada</h3>
+    
+    <p class="descripcion-espera">
+      Esperando monto inicial para poder operar.
+    </p>
+    <p class="sub-espera">
+      Un administrador debe registrar la apertura de caja para habilitar las operaciones del día.
+    </p>
+
+    <div class="acciones-espera">
+      <button class="btn-reintentar" (click)="comprobarCajaInicial()">
+        <mat-icon>refresh</mat-icon> Comprobar
+      </button>
+      <button class="btn-logout-modal" (click)="logout()">
+        <mat-icon>logout</mat-icon> Cerrar Sesión
+      </button>
+    </div>
+  </div>
+</div>

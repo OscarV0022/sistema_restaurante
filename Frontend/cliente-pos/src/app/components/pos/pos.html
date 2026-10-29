@@ -7,6 +7,12 @@
         <h2>Mapa de Mesas</h2>
       </div>
       <div class="controles-mapa">
+        <!-- Botón para navegar a Ventas del Día -->
+        <button class="btn-secundario-mapa" (click)="irAVentas()">
+          <mat-icon>receipt_long</mat-icon>
+          Ventas del Día
+        </button>
+
         <button
           class="btn-principal-mapa"
           [class.activo]="modoAgrupar"
@@ -235,7 +241,7 @@
               >
                 <mat-icon>delete</mat-icon>
               </button>
-              <!-- 🌟 BOTÓN DE PAGO POR SEPARADO 🌟 -->
+              <!-- BOTÓN DE PAGO POR SEPARADO -->
               <button
                 class="btn-icon-accion pagar-separado"
                 [class.activo]="item.seleccionadoPago"
@@ -266,7 +272,7 @@
           
           <!-- BOTÓN DINÁMICO ORDENAR / ACTUALIZAR -->
           <div class="botones-accion-pos">
-            <button class="btn-ordenar" (click)="regresarAlMapa()">
+            <button class="btn-ordenar" (click)="enviarOrdenACocina()">
               <mat-icon>{{ mesaSeleccionada.ordenEnviada ? 'update' : 'check' }}</mat-icon> 
               {{ mesaSeleccionada.ordenEnviada ? 'Actualizar' : 'Ordenar' }}
             </button>

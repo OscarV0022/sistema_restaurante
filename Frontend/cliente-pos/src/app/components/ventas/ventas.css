@@ -1,0 +1,328 @@
+* { box-sizing: border-box; }
+
+.ventas-container {
+  padding: 20px;
+  background-color: #f8fafc;
+  min-height: calc(100vh - 70px);
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  color: #1e293b;
+}
+
+.header-ventas {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 16px 24px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.header-izq {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-volver {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-volver:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.titulo-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.titulo-box h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.icon-titulo {
+  color: #EA580C;
+}
+
+.kpi-total-box {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 8px 18px;
+  border-radius: 10px;
+  text-align: right;
+}
+
+.kpi-total-box span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #9a3412;
+  text-transform: uppercase;
+  display: block;
+}
+
+.kpi-total-box h3 {
+  margin: 2px 0 0 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #EA580C;
+}
+
+/* Estado Vacío y Cargando */
+.estado-cargando, .sin-ventas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  text-align: center;
+}
+
+.estado-cargando mat-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  color: #EA580C;
+  margin-bottom: 12px;
+}
+
+.girando {
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.sin-ventas mat-icon {
+  font-size: 55px;
+  width: 55px;
+  height: 55px;
+  color: #cbd5e1;
+  margin-bottom: 12px;
+}
+
+.sin-ventas h3 {
+  margin: 0 0 6px 0;
+  color: #0f172a;
+  font-size: 1.2rem;
+}
+
+/* Grid de Tickets */
+.grid-tickets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.ticket-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.ticket-card:hover {
+  border-color: #EA580C;
+  box-shadow: 0 6px 12px rgba(234, 88, 12, 0.08);
+}
+
+.ticket-card.expandido {
+  border-color: #EA580C;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+}
+
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ticket-info-basica {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ticket-id {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.ticket-hora {
+  font-size: 0.8rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ticket-hora mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.ticket-monto-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ticket-total {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #EA580C;
+}
+
+.icon-chevron {
+  color: #94a3b8;
+}
+
+/* Cuerpo del ticket al expandir */
+.ticket-cuerpo {
+  margin-top: 14px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ticket-linea-punteada {
+  border-top: 2px dashed #e2e8f0;
+  margin-bottom: 12px;
+}
+
+.tabla-detalles {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.tabla-detalles th {
+  text-align: left;
+  padding: 6px 8px;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.tabla-detalles td {
+  padding: 8px;
+  border-bottom: 1px solid #f8fafc;
+  color: #334155;
+}
+
+.col-cant {
+  font-weight: 800;
+  width: 35px;
+}
+
+.col-desc {
+  word-break: break-word;
+}
+
+.col-sub {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.col-sub.bold {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.col-accion {
+  width: 32px;
+  text-align: center;
+}
+
+.btn-eliminar-item {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.btn-eliminar-item:hover {
+  background: #fef2f2;
+  transform: scale(1.1);
+}
+
+.btn-eliminar-item mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.ticket-footer-acciones {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-borrar-venta-completa {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-borrar-venta-completa:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.btn-borrar-venta-completa mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}

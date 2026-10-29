@@ -1,0 +1,93 @@
+<div class="ventas-container">
+  <header class="header-ventas">
+    <div class="header-izq">
+      <button class="btn-volver" (click)="regresarAlPos()">
+        <mat-icon>arrow_back</mat-icon> Volver al POS
+      </button>
+      <div class="titulo-box">
+        <mat-icon class="icon-titulo">receipt_long</mat-icon>
+        <h2>Ventas del Día</h2>
+      </div>
+    </div>
+
+    <div class="kpi-total-box">
+      <span>Total Recaudado Hoy:</span>
+      <h3>Q{{ totalAcumulado | number: '1.2-2' }}</h3>
+    </div>
+  </header>
+
+  <div *ngIf="cargando" class="estado-cargando">
+    <mat-icon class="girando">autorenew</mat-icon>
+    <span>Cargando ventas...</span>
+  </div>
+
+  <div *ngIf="!cargando && ventas.length === 0" class="sin-ventas">
+    <mat-icon>receipt</mat-icon>
+    <h3>No hay ventas registradas el día de hoy</h3>
+    <p>Las ventas cobradas desde el POS se listarán aquí en formato ticket.</p>
+  </div>
+
+  <div class="grid-tickets" *ngIf="!cargando && ventas.length > 0">
+    <div 
+      class="ticket-card" 
+      *ngFor="let venta of ventas" 
+      [class.expandido]="ventaExpandidaId === venta.id"
+      (click)="toggleExpandir(venta.id)"
+    >
+      <!-- Cabecera del Ticket -->
+      <div class="ticket-header">
+        <div class="ticket-info-basica">
+          <span class="ticket-id">Ticket #{{ venta.id }}</span>
+          <span class="ticket-hora">
+            <mat-icon>schedule</mat-icon> {{ formatearHora(venta.fecha) }}
+          </span>
+        </div>
+        <div class="ticket-monto-box">
+          <span class="ticket-total">Q{{ venta.total | number: '1.2-2' }}</span>
+          <mat-icon class="icon-chevron">{{ ventaExpandidaId === venta.id ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </div>
+      </div>
+
+      <!-- Cuerpo / Desglose del Ticket -->
+      <div class="ticket-cuerpo" *ngIf="ventaExpandidaId === venta.id" (click)="$event.stopPropagation()">
+        <div class="ticket-linea-punteada"></div>
+
+        <table class="tabla-detalles">
+          <thead>
+            <tr>
+              <th>Cant.</th>
+              <th>Descripción</th>
+              <th>Precio</th>
+              <th>Subtotal</th>
+              <th class="col-accion"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of venta.detalles">
+              <td class="col-cant">{{ d.cantidad }}</td>
+              <td class="col-desc">{{ d.descripcion_producto }}</td>
+              <td class="col-sub">Q{{ d.precio_unitario | number: '1.2-2' }}</td>
+              <td class="col-sub bold">Q{{ d.subtotal | number: '1.2-2' }}</td>
+              <td class="col-accion">
+                <button 
+                  class="btn-eliminar-item" 
+                  title="Eliminar este producto de la venta"
+                  (click)="eliminarProducto(venta, d, $event)"
+                >
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="ticket-footer-acciones">
+          <button class="btn-borrar-venta-completa" (click)="eliminarVenta(venta, $event)">
+            <mat-icon>delete_forever</mat-icon>
+            Eliminar Venta Completa
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

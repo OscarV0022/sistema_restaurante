@@ -47,4 +47,28 @@ export class ApiService {
   getReportePorFecha(fecha: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/api/reportes/${fecha}`, this.getHeaders());
   }
+
+  registrarEfectivo(datos: { monto: number; tipo: string; motivo: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/efectivo`, datos, this.getHeaders());
+  }
+
+  verificarCajaInicialHoy(): Observable<{ registrada: boolean }> {
+    return this.http.get<{ registrada: boolean }>(`${this.apiUrl}/api/efectivo/caja-inicial-hoy`, this.getHeaders());
+  }
+
+  getVentasHoy(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/ventas/hoy`, this.getHeaders());
+  } 
+
+  eliminarProductoVenta(idDetalle: number, cantidad: number = 1): Observable<any> {
+  return this.http.delete<any>(`${this.apiUrl}/api/ventas/detalle/${idDetalle}`, {
+    ...this.getHeaders(),
+    body: { cantidad }
+  });
+}
+
+  eliminarVentaCompleta(idVenta: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/api/ventas/${idVenta}`, this.getHeaders());
+  }
+  
 }

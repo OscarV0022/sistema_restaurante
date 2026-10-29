@@ -7,8 +7,7 @@ import { authGuard } from './guards/auth-guard';
 import { UsuariosAdministradorComponent } from './components/usuarios-administrador/usuarios-administrador';
 import { ProductosComponent } from './components/productos/productos';
 import { ChatComponent } from './components/chat/chat';
-
-// 👇 1. Importamos el componente de reportes (ajusta la ruta si es necesario)
+import { VentasComponent} from './components/ventas/ventas';
 import { ReportesComponent } from './components/reportes/reportes';
 
 export const routes: Routes = [
@@ -57,6 +56,13 @@ export const routes: Routes = [
     path: 'chat', 
     component: ChatComponent, 
     canActivate: [authGuard] 
+    },
+
+    { 
+    path: 'ventas', 
+    component: VentasComponent, 
+    canActivate: [authGuard],
+    data: { expectedRoles: ['admin', 'cajero']}
     },
     
     { path: '**', redirectTo: '' },

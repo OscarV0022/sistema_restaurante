@@ -44,13 +44,56 @@
     </div>
   </header>
 
+  <!-- SECCIÓN ARQUEO DE EFECTIVO EN CAJA (SOLO VISTA DÍA) -->
+  <div class="seccion-caja-arqueo" *ngIf="tipoVista === 'dia'">
+    <div class="header-arqueo">
+      <div class="titulo-arqueo">
+        <mat-icon class="icon-caja">point_of_sale</mat-icon>
+        <h3>Arqueo y Flujo de Efectivo en Caja ({{ fechaSeleccionada }})</h3>
+      </div>
+      <span class="badge-arqueo-estado">En tiempo real</span>
+    </div>
+
+    <div class="grid-resumen-caja">
+      <div class="tarjeta-caja-item">
+        <span class="label-caja">Caja Inicial</span>
+        <h3 class="valor-caja">Q{{ cajaInicial | number: '1.2-2' }}</h3>
+        <small class="sub-caja">Apertura del día</small>
+      </div>
+
+      <div class="tarjeta-caja-item">
+        <span class="label-caja">Ventas del Día</span>
+        <h3 class="valor-caja">+Q{{ totalDia | number: '1.2-2' }}</h3>
+        <small class="sub-caja">Ingresos por POS</small>
+      </div>
+
+      <div class="tarjeta-caja-item">
+        <span class="label-caja">Entradas Extra</span>
+        <h3 class="valor-caja entrada-color">+Q{{ entradasEfectivo | number: '1.2-2' }}</h3>
+        <small class="sub-caja">Aportes / Ingresos</small>
+      </div>
+
+      <div class="tarjeta-caja-item">
+        <span class="label-caja">Salidas / Gastos</span>
+        <h3 class="valor-caja salida-color">-Q{{ salidasEfectivo | number: '1.2-2' }}</h3>
+        <small class="sub-caja">Retiros / Proveedores</small>
+      </div>
+
+      <div class="tarjeta-caja-item total-caja-esperado">
+        <span class="label-caja">Total Esperado en Caja</span>
+        <h2 class="valor-caja-total">Q{{ totalCajaEsperado | number: '1.2-2' }}</h2>
+        <small class="sub-caja">Efectivo físico real</small>
+      </div>
+    </div>
+  </div>
+
   <div class="grid-kpis">
     <mat-card class="kpi-card total-dinero">
       <mat-card-content>
         <div class="kpi-icon-box"><mat-icon>payments</mat-icon></div>
         <div class="kpi-info">
-          <span>{{ tipoVista === 'dia' ? 'Total Ventas del Día' : tipoVista === 'semana' ? 'Estimado Semanal' : 'Estimado Mensual' }}</span>
-          <h2>Q{{ totalDia | number: '1.2-2' }}</h2>
+          <span>{{ tipoVista === 'dia' ? 'Total Ventas del Día' : tipoVista === 'semana' ? 'Ventas de los últimos 7 días' : 'Ventas del Mes' }}</span>
+          <h2>Q{{ totalMostrado | number: '1.2-2' }}</h2>
         </div>
       </mat-card-content>
     </mat-card>
@@ -141,7 +184,6 @@
         <tbody>
           <tr *ngFor="let venta of listaVentasDelDia">
             <td>#{{ venta.id }}</td>
-            <!-- 🌟 CAMBIO AQUÍ: Usamos la función para asegurar la hora exacta de Guatemala 🌟 -->
             <td>{{ formatearHoraGuatemala(venta.fecha) }}</td>
             <td class="col-monto">Q{{ venta.total | number: '1.2-2' }}</td>
           </tr>

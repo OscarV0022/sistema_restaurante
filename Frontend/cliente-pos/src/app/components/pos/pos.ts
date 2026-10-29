@@ -64,7 +64,6 @@ export class Pos implements OnInit, OnDestroy {
     { nombre: 'Sección 1', mesas: 6 },
     { nombre: 'Sección 2', mesas: 4 },
     { nombre: 'Sección 3', mesas: 4 },
-    { nombre: 'Sección 4', mesas: 5 },
     { nombre: 'PARA LLEVAR', mesas: 15 }
   ];
 
@@ -89,7 +88,7 @@ export class Pos implements OnInit, OnDestroy {
     private api: ApiService, 
     private snackBar: MatSnackBar,
     private router: Router,
-    private socketService: SocketService // 👈 Inyectamos el servicio
+    private socketService: SocketService
   ) {}
 
   ngOnInit(): void {
@@ -199,13 +198,10 @@ export class Pos implements OnInit, OnDestroy {
   }
 
   inicializarSocket() {
-    // Opcional: puedes usar this.socketService.getSocket() para unificar sockets
     this.socket = io(`http://${window.location.hostname}:3000`);
 
     this.socket.on('connect', () => {
       this.socket.emit('solicitar_mesas');
-      
-      // 🌟 REGISTRAMOS AL USUARIO EN EL SOCKET APENAS CONECTA AL POS 🌟
       const nombreUsuario = this.obtenerNombreUsuario();
       this.socket.emit('registrar_usuario', nombreUsuario);
     });
@@ -296,15 +292,24 @@ export class Pos implements OnInit, OnDestroy {
 
   inicializarMesas() {
     let contadorId = 1;
+
+    const letrasSecciones: { [key: string]: string } = {
+      'Sección 1': 'A',
+      'Sección 2': 'B',
+      'Sección 3': 'C'
+    };
+
     this.configuracionSecciones.forEach(config => {
       if (!this.secciones.includes(config.nombre)) {
         this.secciones.push(config.nombre);
       }
       for (let i = 1; i <= config.mesas; i++) {
-        const prefijo = config.nombre === 'PARA LLEVAR' ? 'Orden' : 'Mesa';
+        const letra = letrasSecciones[config.nombre];
+        const nombreFinal = config.nombre === 'PARA LLEVAR' ? `Orden ${i}` : `Mesa ${i}${letra || ''}`;
+
         this.todasLasMesas.push({
           id: contadorId++,
-          nombre: `${prefijo} ${i}`,
+          nombre: nombreFinal,
           seccion: config.nombre,
           estado: 'libre',
           visible: true,
@@ -370,22 +375,6 @@ export class Pos implements OnInit, OnDestroy {
             return; 
           }
         } else {
-          this.mesaSeleccionada.estado = 'ocupada';
-          this.mesaSeleccionada.estadoCocina = 'pendientes';
-          this.mesaSeleccionada.ordenEnviada = true;
-          
-          if (this.socket) {
-            const ticketCocina = {
-              mesa: this.mesaSeleccionada.nombre,
-              atendidoPor: this.mesaSeleccionada.atendidoPor,
-              detalles: this.mesaSeleccionada.carrito.map(item => ({
-                descripcion: item.descripcion,
-                cantidad: item.cantidad
-              }))
-            };
-            this.socket.emit('nueva_orden', ticketCocina);
-          }
-
           this.guardarEstado();
         }
       }
@@ -394,6 +383,34 @@ export class Pos implements OnInit, OnDestroy {
       this.montoRecibido = null;
       this.mostrandoPantallaPago = false;
       this.verCategorias();
+  }
+
+  enviarOrdenACocina() {
+    if (!this.mesaSeleccionada) return;
+
+    if (this.mesaSeleccionada.carrito.length === 0) {
+      this.snackBar.open('Agrega productos antes de ordenar', 'OK', { duration: 2000 });
+      return;
+    }
+
+    this.mesaSeleccionada.estado = 'ocupada';
+    this.mesaSeleccionada.estadoCocina = 'pendientes';
+    this.mesaSeleccionada.ordenEnviada = true;
+    
+    if (this.socket) {
+      const ticketCocina = {
+        mesa: this.mesaSeleccionada.nombre,
+        atendidoPor: this.mesaSeleccionada.atendidoPor,
+        detalles: this.mesaSeleccionada.carrito.map(item => ({
+          descripcion: item.descripcion,
+          cantidad: item.cantidad
+        }))
+      };
+      this.socket.emit('nueva_orden', ticketCocina);
+    }
+
+    this.guardarEstado();
+    this.regresarAlMapa();
   }
 
   cambiarEstadoManual() {
@@ -625,6 +642,10 @@ export class Pos implements OnInit, OnDestroy {
   get cambioCalculado(): number {
       if (!this.montoRecibido) return 0;
       return this.montoRecibido - this.totalACobrar;
+  }
+
+  irAVentas() {
+    this.router.navigate(['/ventas']);
   }
 
   confirmarVentaFinal() {
